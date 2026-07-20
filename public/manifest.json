@@ -1,7 +1,7 @@
 {
-  "name": "المصحف الاحترافي - Quran Pro",
-  "short_name": "المصحف",
-  "description": "تجربة قراءة واستماع للمصحف الشريف بتصميم عصري وتقنيات الذكاء الاصطناعي.",
+  "name": "القرآن الكريم - Quran Pro",
+  "short_name": "القرآن الكريم",
+  "description": "تجربة قراءة واستماع للقرآن الكريم بتصميم عصري وتقنيات الذكاء الاصطناعي.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -14,21 +14,21 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
+      "src": "/icon-192.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
+      "src": "/icon-512.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
+      "src": "/icon-512.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "maskable"
     }
   ],
@@ -38,14 +38,14 @@
       "short_name": "الفهرس",
       "description": "الانتقال إلى قائمة السور",
       "url": "/",
-      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     },
     {
       "name": "المفضلة",
       "short_name": "المفضلة",
       "description": "الآيات المحفوظة",
       "url": "/?tab=bookmarks",
-      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
     }
   ]
 }

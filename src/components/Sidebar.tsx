@@ -13,7 +13,8 @@ import {
   QuestionMarkIcon, 
   ShieldCheckIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  MailIcon
 } from './Icons';
 import { useQuranStore, useSettingsStore, useUIStore } from '../store';
 
@@ -235,6 +236,7 @@ const Sidebar: React.FC = () => {
                                   </div>
                                   
                                   <button onClick={() => { openModal('help'); setIsMenuOpen(false); }} className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border"><QuestionMarkIcon className="w-4 h-4 text-theme-accent" /><span>طريقة الاستخدام</span></button>
+                                  <a href="mailto:medissa711@gmail.com?subject=التبليغ عن خطأ في التطبيق" className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border" onClick={() => setIsMenuOpen(false)}><MailIcon className="w-4 h-4 text-theme-accent" /><span>التبليغ عن خطأ</span></a>
                                   <button onClick={() => { openModal('aiTerms'); setIsMenuOpen(false); }} className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border"><ShieldCheckIcon className="w-4 h-4 text-amber-500" /><span>شروط الذكاء الاصطناعي</span></button>
                                   <button onClick={() => { openModal('about'); setIsMenuOpen(false); }} className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors"><InfoIcon className="w-4 h-4 text-theme-text-muted" /><span>عن التطبيق</span></button>
                               </div>

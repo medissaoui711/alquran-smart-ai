@@ -69,7 +69,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {isMobile && (
           <header className="h-16 flex items-center justify-between px-4 bg-theme-surface border-b border-theme-border flex-shrink-0 z-30">
             <div className="w-10" />
-            <h1 className="text-lg font-bold font-serif text-theme-accent">المصحف</h1>
+            <h1 className="text-lg font-bold font-serif text-theme-accent">القرآن الكريم</h1>
             {selectedSurah ? (
                <button 
                 onClick={clearReader}
