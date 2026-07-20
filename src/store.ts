@@ -4,26 +4,35 @@ import { Surah, SurahDetail, Bookmark } from './types';
 import { fetchSurahDetails, fetchSurahList } from './services/quranService';
 
 // --- Settings Store ---
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 interface SettingsState {
-  isDarkMode: boolean;
+  theme: ThemeMode;
   fontSize: number;
   fontType: string;
-  toggleDarkMode: () => void;
+  setTheme: (theme: ThemeMode) => void;
   setFontSize: (size: number) => void;
   setFontType: (type: string) => void;
 }
 
+const applyTheme = (theme: ThemeMode) => {
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+};
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      isDarkMode: true,
+      theme: 'system',
       fontSize: 26,
       fontType: 'Amiri',
-      toggleDarkMode: () => set((state) => {
-        const newMode = !state.isDarkMode;
-        if (newMode) document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-        return { isDarkMode: newMode };
+      setTheme: (theme) => set(() => {
+        applyTheme(theme);
+        return { theme };
       }),
       setFontSize: (size) => set({ fontSize: size }),
       setFontType: (type) => set({ fontType: type }),
@@ -31,8 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'quran_settings',
       onRehydrateStorage: () => (state) => {
-          if (state?.isDarkMode) document.documentElement.classList.add('dark');
-          else document.documentElement.classList.remove('dark');
+          if (state?.theme) applyTheme(state.theme);
       }
     }
   )
@@ -40,28 +48,42 @@ export const useSettingsStore = create<SettingsState>()(
 
 // --- UI Store ---
 interface UIState {
-  isSidebarOpen: boolean;
+  isSidebarCollapsed: boolean;
+  isDrawerOpen: boolean;
   activeModal: 'none' | 'help' | 'about' | 'aiTerms' | 'gemini';
-  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  setDrawerOpen: (open: boolean) => void;
   openModal: (modal: 'help' | 'about' | 'aiTerms' | 'gemini') => void;
   closeModal: () => void;
   isMobile: boolean;
-  isTablet: boolean; // New detection
+  isTablet: boolean;
+  isDesktop: boolean;
   setIsMobile: (isMobile: boolean) => void;
+  showSplash: boolean;
+  setShowSplash: (show: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  isSidebarOpen: true,
+  isSidebarCollapsed: false,
+  isDrawerOpen: false,
   activeModal: 'none',
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  openModal: (modal) => set({ activeModal: modal }),
+  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
+  setDrawerOpen: (open) => set({ isDrawerOpen: open }),
+  openModal: (modal) => set({ activeModal: modal, isDrawerOpen: false }),
   closeModal: () => set({ activeModal: 'none' }),
-  isMobile: window.innerWidth < 768,
-  isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
-  setIsMobile: (isMobile) => set({ 
-    isMobile, 
-    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024 
-  }),
+  isMobile: window.innerWidth < 640,
+  isTablet: window.innerWidth >= 640 && window.innerWidth < 1024,
+  isDesktop: window.innerWidth >= 1024,
+  setIsMobile: (isMobile) => {
+    const width = window.innerWidth;
+    set({ 
+      isMobile: width < 640, 
+      isTablet: width >= 640 && width < 1024,
+      isDesktop: width >= 1024
+    });
+  },
+  showSplash: true,
+  setShowSplash: (show) => set({ showSplash: show }),
 }));
 
 // --- Quran Data Store ---
@@ -73,12 +95,14 @@ interface QuranState {
   isLoading: boolean;
   error: string | null;
   initialPageToLoad: number | null;
+  activeAyah: string | null; // format: "surahNumber:ayahNumber"
   
   // Actions
   fetchSurahList: () => Promise<void>;
   loadSingleSurah: (surah: Surah, startPage?: number | null) => Promise<void>;
   loadNextSurah: () => Promise<void>;
   toggleBookmark: (surahNumber: number) => void;
+  setActiveAyah: (ayahKey: string | null) => void;
   resumeLastRead: () => void;
   clearReader: () => void;
 }
@@ -93,6 +117,7 @@ export const useQuranStore = create<QuranState>()(
       isLoading: false,
       error: null,
       initialPageToLoad: null,
+      activeAyah: null,
 
       fetchSurahList: async () => {
         try {
@@ -132,7 +157,12 @@ export const useQuranStore = create<QuranState>()(
         try {
           const detail = await fetchSurahDetails(nextSurahNumber);
           if (detail) {
-            set((state) => ({ loadedSurahs: [...state.loadedSurahs, detail] }));
+            set((state) => {
+              if (state.loadedSurahs.some(s => s.number === detail.number)) {
+                return state;
+              }
+              return { loadedSurahs: [...state.loadedSurahs, detail] };
+            });
           }
         } catch (error) {
           console.error("Failed to load next surah");
@@ -151,6 +181,8 @@ export const useQuranStore = create<QuranState>()(
           return { bookmarks: newBookmarks };
         });
       },
+
+      setActiveAyah: (ayahKey) => set({ activeAyah: ayahKey }),
 
       resumeLastRead: () => {
         const { surahs } = get();

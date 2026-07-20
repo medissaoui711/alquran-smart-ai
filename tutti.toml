@@ -1,0 +1,92 @@
+# tutti.toml - AI Agent Guidelines and Project Constitution
+# This file dictates the rules of engagement, architectural decisions, and design system constraints for any AI agent interacting with this repository.
+
+[tech_stack]
+framework = "React 18"
+language = "TypeScript"
+build_system = "Vite"
+styling = "Tailwind CSS + Custom CSS Variables Theme System"
+state_management = "Zustand"
+icons = "Heroicons (via custom Icons.tsx or external)"
+markdown = "react-markdown"
+
+[tech_stack.rules]
+why = "This stack is chosen for high performance, rapid iteration, and strong type safety."
+how_to_use = "Leverage Zustand for global state without prop drilling. Use Tailwind for styling but rely on theme variables for colors. Ensure strict TypeScript typing for all components and services."
+forbidden = "Do not introduce Redux, Context API (unless absolutely necessary for library integration), or CSS-in-JS libraries like styled-components. Do not eject Vite."
+
+[architecture]
+folder_structure = """
+/src/components - Reusable UI elements and feature components.
+/src/services - API calls and external integrations (e.g., Gemini, Quran).
+/src/store.ts - Zustand stores for state management.
+/src/types.ts - Global TypeScript interfaces and types.
+"""
+component_architecture = "Use functional components with hooks. Keep components small, focused, and single-responsibility."
+state_strategy = "Use Zustand slices or separate stores for domain-specific state (e.g., Settings, UI, Quran Data)."
+
+[architecture.rules]
+where_to_create = "Place new UI elements in /components. Place external logic in /services. Add global state to store.ts."
+prevent = "Do not create large monolithic components. Do not mix business logic with presentation logic. Avoid duplicate data fetching logic; use the store."
+
+[styling_rules]
+philosophy = "Premium, highly readable, distraction-free reading experience with a subtle tech-forward edge."
+color_system = "Rely strictly on the Custom CSS Variables Theme System (e.g., bg-theme-bg-primary, text-theme-text-primary, border-theme-border, text-theme-accent). Do NOT use hardcoded colors (bg-white, text-black) for core surfaces."
+typography = "Serif (Amiri/Scheherazade) for Quran text. Sans-serif for UI elements."
+dark_mode = "Dark mode is natively supported via the theme variable system in index.css. Do NOT use Tailwind's `dark:` modifier for layout colors anymore, use the semantic `theme-*` classes."
+
+[styling_rules.prevent]
+forbidden_styles = "Do not use default Tailwind appearance if it conflicts with the theme. Do not add random gradients, generic 'AI dashboard' glowing borders, or arbitrary colors. Do not break the established contrast ratios."
+
+[custom_css_classes]
+"bg-theme-bg-primary" = "Main background color of the application (Light: stone-100, Dark: stone-950)."
+"bg-theme-bg-secondary" = "Secondary background, often used for reading surfaces or sidebars."
+"bg-theme-surface" = "Card, modal, or elevated surface background."
+"bg-theme-surface-hover" = "Hover state for surfaces and interactive list items."
+"text-theme-text-primary" = "Primary high-contrast text color."
+"text-theme-text-secondary" = "Secondary text color for descriptions and subtitles."
+"text-theme-text-muted" = "Muted text color for placeholders or less important metadata."
+"border-theme-border" = "Default border color for dividers, cards, and sidebars."
+"text-theme-accent" = "Primary accent color (Emerald) for active states, highlights, and primary actions."
+
+[ai_directives]
+read_first = true
+preserve_design = true
+reuse_components = true
+respect_architecture = true
+maintain_typesafety = true
+support_arabic_english = true
+support_rtl_ltr = "The application is fundamentally RTL. Do not break RTL layouts with LTR-specific margins (use start/end logical properties if needed, though Tailwind RTL is handled via dir='rtl')."
+maintain_dark_mode = "Always use semantic `theme-*` classes to ensure dark mode works automatically."
+preserve_accessibility = true
+
+[ai_directives.responsive]
+desktop = "Sidebar navigation (flex-row layout)."
+mobile = "Bottom Navigation or hidden sidebar with overlay/drawer."
+tablet = "Adaptive layout."
+
+[ai_directives.forbidden]
+rules = [
+  "Do not rewrite the design without explicit permission.",
+  "Do not create random CSS classes.",
+  "Do not ignore existing components.",
+  "Do not remove features.",
+  "Do not break translations.",
+  "Do not break responsive behavior.",
+  "Do not disable or bypass the adaptive dark mode system.",
+  "Do not replace custom theme styles with generic hardcoded utilities (e.g. replacing bg-theme-surface with bg-white dark:bg-stone-900)."
+]
+
+[code_quality]
+clean_code = "Follow clean code practices. Use descriptive variable names."
+solid = "Adhere to SOLID principles where applicable in React."
+reusable = "Extract repeated UI patterns into shared components."
+type_safety = "Use strict TypeScript. Avoid 'any' types."
+documentation = "Add JSDoc comments for complex functions and services."
+
+[change_policy]
+step_1 = "Analyze existing implementation."
+step_2 = "Explain impact of the change."
+step_3 = "Identify affected files."
+step_4 = "Propose a solution."
+step_5 = "Implement the solution after planning."

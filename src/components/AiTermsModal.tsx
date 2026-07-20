@@ -29,23 +29,15 @@ const AiTermsModal: React.FC<AiTermsModalProps> = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
-
-      {/* Modal Content */}
-      <div className="relative bg-white dark:bg-stone-900 w-full max-w-xl rounded-2xl shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
+    <div className="relative bg-theme-surface w-full max-w-xl rounded-2xl shadow-2xl border border-theme-border overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
         
         {/* Header */}
-        <div className="bg-gradient-to-l from-amber-50 to-white dark:from-stone-800 dark:to-stone-900 px-6 py-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+        <div className="bg-gradient-to-l from-amber-50 to-white dark:from-stone-800 dark:to-stone-900 px-6 py-4 border-b border-theme-border flex justify-between items-center">
             <h2 className="text-xl font-bold font-serif text-amber-700 dark:text-amber-500 flex items-center gap-2">
                 <ShieldCheckIcon className="w-6 h-6" />
                 شروط استخدام الذكاء الاصطناعي
             </h2>
-            <button onClick={onClose} className="p-2 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-full transition-colors text-stone-500">
+            <button onClick={onClose} className="p-2 hover:bg-theme-surface-hover rounded-full transition-colors text-stone-500">
                 <XMarkIcon className="w-6 h-6" />
             </button>
         </div>
@@ -61,8 +53,8 @@ const AiTermsModal: React.FC<AiTermsModalProps> = ({ isOpen, onClose }) => {
 
             <div className="space-y-6">
                 {terms.map((term, idx) => (
-                    <div key={idx} className="relative pr-4 border-r-2 border-stone-200 dark:border-stone-700">
-                        <h3 className="font-bold text-stone-800 dark:text-stone-200 mb-2 text-base">{term.title}</h3>
+                    <div key={idx} className="relative pr-4 border-r-2 border-theme-border">
+                        <h3 className="font-bold text-theme-text-primary mb-2 text-base">{term.title}</h3>
                         <p className="text-sm text-stone-600 dark:text-stone-400 leading-loose text-justify">
                             {term.content}
                         </p>
@@ -74,7 +66,7 @@ const AiTermsModal: React.FC<AiTermsModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-stone-50 dark:bg-stone-950 border-t border-stone-100 dark:border-stone-800 text-center">
+        <div className="p-4 bg-theme-surface border-t border-theme-border text-center">
             <button 
                 onClick={onClose}
                 className="w-full py-2.5 bg-stone-800 hover:bg-stone-900 dark:bg-stone-700 dark:hover:bg-stone-600 text-white font-bold rounded-lg transition-colors text-sm shadow-lg"
@@ -83,7 +75,6 @@ const AiTermsModal: React.FC<AiTermsModalProps> = ({ isOpen, onClose }) => {
             </button>
         </div>
       </div>
-    </div>
   );
 };
 

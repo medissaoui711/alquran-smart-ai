@@ -3,10 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#1c1917" />
+    <meta name="theme-color" content="#10b981" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="المصحف" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-touch-fullscreen" content="yes" />
     <meta name="description" content="قارئ قرآن حديث واحترافي بتصميم المصحف المستمر، مع تلاوة صوتية وتفسير بالذكاء الاصطناعي." />
+    
+    <!-- Icons & Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn-icons-png.flaticon.com/512/3024/3024479.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn-icons-png.flaticon.com/512/3024/3024479.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/3024/3024479.png" />
+    <link rel="mask-icon" href="https://cdn-icons-png.flaticon.com/512/3024/3024479.png" color="#10b981" />
+
     <link rel="manifest" href="/manifest.json" />
     <title>المصحف الاحترافي</title>
     
@@ -33,16 +44,5 @@
   <body class="bg-[#f0ece3] dark:bg-stone-950 text-stone-800 dark:text-stone-100 antialiased h-[100dvh] w-screen overflow-hidden font-serif transition-colors duration-300">
     <div id="root" class="h-full w-full"></div>
     <script type="module" src="/src/index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js').then(registration => {
-            console.log('SW registered: ', registration);
-          }).catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-          });
-        });
-      }
-    </script>
   </body>
 </html>

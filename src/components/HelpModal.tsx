@@ -33,23 +33,15 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
-
-      {/* Modal Content */}
-      <div className="relative bg-white dark:bg-stone-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="relative bg-theme-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-theme-border overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="bg-gradient-to-l from-emerald-50 to-white dark:from-stone-800 dark:to-stone-900 px-6 py-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+        <div className="bg-gradient-to-l from-emerald-50 to-white dark:from-stone-800 dark:to-stone-900 px-6 py-4 border-b border-theme-border flex justify-between items-center">
             <div>
                 <h2 className="text-xl font-bold font-serif text-emerald-800 dark:text-emerald-400">دليل الاستخدام</h2>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">تعرف على مميزات المصحف الاحترافي</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-full transition-colors text-stone-500">
+            <button onClick={onClose} className="p-2 hover:bg-theme-surface-hover rounded-full transition-colors text-stone-500">
                 <XMarkIcon className="w-6 h-6" />
             </button>
         </div>
@@ -58,12 +50,12 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         <div className="p-6 max-h-[70vh] overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {features.map((feature, idx) => (
-                    <div key={idx} className="flex gap-4 p-4 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-colors">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white dark:bg-stone-800 flex items-center justify-center shadow-sm">
+                    <div key={idx} className="flex gap-4 p-4 rounded-xl bg-theme-bg-secondary border border-theme-border hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-colors">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-theme-surface flex items-center justify-center shadow-sm">
                             {feature.icon}
                         </div>
                         <div>
-                            <h3 className="font-bold text-stone-800 dark:text-stone-200 mb-1 font-serif">{feature.title}</h3>
+                            <h3 className="font-bold text-theme-text-primary mb-1 font-serif">{feature.title}</h3>
                             <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed font-sans">{feature.desc}</p>
                         </div>
                     </div>
@@ -83,7 +75,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-stone-50 dark:bg-stone-950 border-t border-stone-100 dark:border-stone-800 text-center">
+        <div className="p-4 bg-theme-surface border-t border-theme-border text-center">
             <button 
                 onClick={onClose}
                 className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-lg shadow-emerald-600/20 transition-all transform hover:scale-105"
@@ -92,7 +84,6 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </button>
         </div>
       </div>
-    </div>
   );
 };
 

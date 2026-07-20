@@ -1,5 +1,6 @@
 {
   "name": "المصحف الاحترافي",
   "description": "قارئ قرآن حديث واحترافي بتصميم المصحف المستمر، مع تلاوة صوتية وتفسير بالذكاء الاصطناعي.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

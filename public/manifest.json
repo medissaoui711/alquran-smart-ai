@@ -1,21 +1,51 @@
 {
-  "name": "المصحف الاحترافي",
+  "name": "المصحف الاحترافي - Quran Pro",
   "short_name": "المصحف",
+  "description": "تجربة قراءة واستماع للمصحف الشريف بتصميم عصري وتقنيات الذكاء الاصطناعي.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
   "background_color": "#1c1917",
-  "theme_color": "#1c1917",
-  "orientation": "portrait",
+  "theme_color": "#10b981",
+  "orientation": "any",
+  "categories": ["books", "reference", "education"],
+  "lang": "ar",
+  "dir": "rtl",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الفهرس",
+      "short_name": "الفهرس",
+      "description": "الانتقال إلى قائمة السور",
+      "url": "/",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "المفضلة",
+      "short_name": "المفضلة",
+      "description": "الآيات المحفوظة",
+      "url": "/?tab=bookmarks",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3024/3024479.png", "sizes": "192x192" }]
     }
   ]
 }
