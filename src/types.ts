@@ -1,4 +1,3 @@
-
 export interface Surah {
   number: number;
   name: string;
@@ -49,4 +48,11 @@ export interface QuranAPIResponse<T> {
 export interface Bookmark {
   surahNumber: number;
   addedAt: number;
+}
+
+export interface FlatAyah extends Ayah {
+  surahName: string;
+  surahNumber: number;
+  isFirstAyahOfSurah: boolean;
+  surahRevelation: string;
 }

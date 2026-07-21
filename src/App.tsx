@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import MushafView from './components/MushafView';
 import { ModalContainer } from './components/ModalContainer';
 import { MainLayout } from './layouts/MainLayout';
+import { ErrorMessage } from './components/ErrorMessage';
 import { useQuranStore } from './store';
 import { useTheme } from './hooks/useTheme';
 import { useResponsive } from './hooks/useResponsive';
@@ -28,15 +29,7 @@ function App() {
   return (
     <MainLayout>
       {error ? (
-        <div className="flex-1 flex items-center justify-center p-8 text-center flex-col">
-          <p className="text-red-500 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-          >
-            إعادة المحاولة
-          </button>
-        </div>
+        <ErrorMessage error={error} />
       ) : (
         <MushafView />
       )}
