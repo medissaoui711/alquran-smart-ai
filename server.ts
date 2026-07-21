@@ -35,8 +35,8 @@ async function startServer() {
       
       if (error?.status === 429 || error?.message?.includes("429") || error?.code === 429) {
         res.status(429).json({ 
-            error: "لقد تجاوزت الحد المسموح للاستخدام المجاني، يرجى المحاولة لاحقاً.",
-            retryDelay: retryDelay
+          error: "لقد تجاوزت الحد المسموح للاستخدام المجاني، يرجى المحاولة لاحقاً.",
+          retryDelay: retryDelay
         });
       } else {
         res.status(500).json({ error: "Failed to generate content" });
@@ -44,8 +44,26 @@ async function startServer() {
     }
   });
 
+  // Quran API proxy route
+  app.get("/api/quran/*all", async (req, res) => {
+    const targetPath = req.path.replace(/^\/api\/quran/, "");
+    const targetUrl = `https://api.alquran.cloud/v1${targetPath}`;
+    try {
+      const response = await fetch(targetUrl);
+      if (!response.ok) {
+        return res.status(response.status).json({ error: `Quran API returned ${response.status}` });
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Quran API Proxy Error:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch from Quran API" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    app.use(express.static(path.join(process.cwd(), "public")));
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -54,7 +72,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

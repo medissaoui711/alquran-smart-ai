@@ -1,6 +1,6 @@
 import { QuranAPIResponse, Surah, SurahDetail } from '../types';
 
-const BASE_URL = 'https://api.alquran.cloud/v1';
+const BASE_URL = '/api/quran';
 
 // In-memory cache
 const surahListCache: Surah[] | null = null;

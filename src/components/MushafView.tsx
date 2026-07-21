@@ -711,7 +711,7 @@ const MushafView: React.FC = () => {
                     className="w-48 md:w-64 aspect-[3/4] rounded-xl overflow-hidden border-[6px] border-stone-800 shadow-2xl relative"
                 >
                     <img 
-                        src="/src/assets/images/mushaf_cover_elegant_1784578565891.jpg" 
+                        src="/mushaf_cover_elegant_1784578565891.jpg" 
                         alt="المصحف الشريف" 
                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                         referrerPolicy="no-referrer"
