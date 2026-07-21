@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
   app.use(express.json());
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -18,19 +19,20 @@ async function startServer() {
     }
 
     const { prompt } = req.body;
+
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.0-flash',
         contents: prompt,
       });
+
       res.json({ text: response.text });
     } catch (error: any) {
       console.error("Gemini Error:", error);
-      // Try to parse error details if available
+
       const details = error?.details || [];
       const retryInfo = details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
       const retryDelayStr = retryInfo ? retryInfo.retryDelay : null;
-      // retryDelayStr might be in "43s" format
       const retryDelay = retryDelayStr ? parseFloat(retryDelayStr) : null;
       
       if (error?.status === 429 || error?.message?.includes("429") || error?.code === 429) {
@@ -44,12 +46,15 @@ async function startServer() {
     }
   });
 
-  // Quran API proxy route
-  app.get("/api/quran/*all", async (req, res) => {
-    const targetPath = req.path.replace(/^\/api\/quran/, "");
-    const targetUrl = `https://api.alquran.cloud/v1${targetPath}`;
+  // Quran API proxy route using Express middleware app.use
+  app.use("/api/quran", async (req, res) => {
+    const targetUrl = `https://api.alquran.cloud/v1${req.url}`;
     try {
-      const response = await fetch(targetUrl);
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
       if (!response.ok) {
         return res.status(response.status).json({ error: `Quran API returned ${response.status}` });
       }
@@ -61,7 +66,7 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
+  // Vite middleware for development & static serving for production
   if (process.env.NODE_ENV !== "production") {
     app.use(express.static(path.join(process.cwd(), "public")));
     const vite = await createViteServer({
@@ -72,6 +77,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    app.use(express.static(path.join(process.cwd(), "public")));
     app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
