@@ -22,6 +22,7 @@ import { useResponsive } from './hooks/useResponsive';
  */
 function App() {
   const { fetchSurahList, error } = useQuranStore();
+  const { showUpdate, updateApp } = usePWA();
 
   // Initialize Logical Hooks
   useTheme();
@@ -49,7 +50,7 @@ function App() {
       <AboutModal />
       <AiTermsModal />
       <ModalContainer />
-      <PWAUpdate />
+      <PWAUpdate show={showUpdate} onUpdate={updateApp} />
     </MainLayout>
   );
 }
