@@ -1,5 +1,6 @@
 import React from 'react';
 import { SwatchIcon, MinusIcon, PlusIcon, QuestionMarkIcon, MailIcon, ShieldCheckIcon, InfoIcon } from '../Icons';
+import { usePWAStore } from '../../store';
 
 interface SidebarMenuDropdownProps {
   fontSize: number;
@@ -18,6 +19,28 @@ const SidebarMenuDropdown: React.FC<SidebarMenuDropdownProps> = ({
   openModal,
   setIsMenuOpen,
 }) => {
+  const { isInstallable, installPrompt, setInstallPrompt } = usePWAStore();
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    
+    // Show the install prompt
+    await installPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    const { outcome } = await installPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    
+    // Clear the saved prompt since it can't be used again
+    setInstallPrompt(null);
+    setIsMenuOpen(false);
+  };
+
   return (
     <div className="absolute left-0 top-full mt-2 w-64 bg-theme-surface rounded-xl shadow-2xl border border-theme-border overflow-hidden z-50 origin-top-left animate-in fade-in zoom-in-95 duration-100">
       <div className="p-4 border-b border-theme-border">
@@ -51,7 +74,19 @@ const SidebarMenuDropdown: React.FC<SidebarMenuDropdownProps> = ({
           </div>
         </div>
       </div>
-      
+
+      {isInstallable && (
+        <button 
+          onClick={handleInstallClick} 
+          className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-colors border-b border-theme-border bg-emerald-50 dark:bg-emerald-900/10"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>تثبيت التطبيق</span>
+        </button>
+      )}
+
       <button onClick={() => { openModal('help'); setIsMenuOpen(false); }} className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border"><QuestionMarkIcon className="w-4 h-4 text-theme-accent" /><span>طريقة الاستخدام</span></button>
       <a href="mailto:medissa711@gmail.com?subject=التبليغ عن خطأ في التطبيق" className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border" onClick={() => setIsMenuOpen(false)}><MailIcon className="w-4 h-4 text-theme-accent" /><span>التبليغ عن خطأ</span></a>
       <button onClick={() => { openModal('aiTerms'); setIsMenuOpen(false); }} className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm text-theme-text-secondary transition-colors border-b border-theme-border"><ShieldCheckIcon className="w-4 h-4 text-amber-500" /><span>شروط الذكاء الاصطناعي</span></button>

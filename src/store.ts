@@ -214,3 +214,24 @@ export const useQuranStore = create<QuranState>()(
     }
   )
 );
+// --- PWA Store ---
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed',
+    platform: string
+  }>;
+  prompt(): Promise<void>;
+}
+
+interface PWAState {
+  installPrompt: BeforeInstallPromptEvent | null;
+  setInstallPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
+  isInstallable: boolean;
+}
+
+export const usePWAStore = create<PWAState>((set) => ({
+  installPrompt: null,
+  setInstallPrompt: (prompt) => set({ installPrompt: prompt, isInstallable: !!prompt }),
+  isInstallable: false,
+}));
