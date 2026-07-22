@@ -38,7 +38,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="bg-gradient-to-l from-emerald-50 to-white dark:from-stone-800 dark:to-stone-900 px-6 py-4 border-b border-theme-border flex justify-between items-center">
             <div>
-                <h2 className="text-xl font-bold font-serif text-emerald-800 dark:text-emerald-400">دليل الاستخدام</h2>
+                <h2 className="text-xl font-bold font-serif text-emerald-800 dark:text-emerald-300">دليل الاستخدام</h2>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">تعرف على مميزات المصحف الاحترافي</p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-theme-surface-hover rounded-full transition-colors text-stone-500">

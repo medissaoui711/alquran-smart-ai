@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <linearGradient id="coverBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022c22" />
+      <stop offset="50%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#9a3412" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#coverBg)" />
+  <!-- Double Ornate Border -->
+  <rect x="30" y="30" width="540" height="740" fill="none" stroke="url(#gold)" stroke-width="12" rx="16" />
+  <rect x="50" y="50" width="500" height="700" fill="none" stroke="url(#gold)" stroke-width="4" rx="8" stroke-dasharray="16 8" />
+  <!-- Center Star/Medallion -->
+  <circle cx="300" cy="400" r="140" fill="none" stroke="url(#gold)" stroke-width="8" />
+  <circle cx="300" cy="400" r="110" fill="none" stroke="url(#gold)" stroke-width="3" />
+  <polygon points="300,240 335,360 460,360 360,430 400,550 300,470 200,550 240,430 140,360 265,360" fill="url(#gold)" opacity="0.3" />
+</svg>

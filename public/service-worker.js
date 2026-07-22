@@ -1,22 +1,38 @@
-const CACHE_NAME = 'mushaf-pro-v2'; // Bump version for updates
-const ASSETS_CACHE = 'assets-v2';
+const CACHE_NAME = 'mushaf-pro-v3'; // Bump version for updates
+const ASSETS_CACHE = 'assets-v3';
 const AUDIO_CACHE = 'audio-v1'; // Audio can stay v1
 const API_CACHE = 'api-v1';
 
-// Assets to pre-cache (Essential for Shell)
+// Assets to pre-cache (Essential for Shell & PWA Icons)
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/src/index.tsx',
-  '/src/index.css'
+  '/favicon.svg',
+  '/favicon.png',
+  '/apple-touch-icon.svg',
+  '/apple-touch-icon.png',
+  '/icon-192.svg',
+  '/icon-192.png',
+  '/icon-512.svg',
+  '/icon-512.png',
+  '/mushaf_cover.svg',
+  '/mushaf_cover.jpg',
+  '/ai_feature_icon.svg',
+  '/ai_feature_icon.jpg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(ASSETS_CACHE).then((cache) => {
+    caches.open(ASSETS_CACHE).then(async (cache) => {
       console.log('Pre-caching essential assets...');
-      return cache.addAll(PRECACHE_URLS);
+      for (const url of PRECACHE_URLS) {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.warn('Failed to pre-cache asset:', url, err);
+        }
+      }
     })
   );
   self.skipWaiting();

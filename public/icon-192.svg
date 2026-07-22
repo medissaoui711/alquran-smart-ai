@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)" />
+
+  <!-- Outer Islamic Gold Frame -->
+  <rect x="32" y="32" width="448" height="448" rx="76" fill="none" stroke="url(#goldGrad)" stroke-width="8" opacity="0.9" />
+  <rect x="48" y="48" width="416" height="416" rx="60" fill="none" stroke="url(#goldGrad)" stroke-width="3" opacity="0.6" stroke-dasharray="12 8" />
+
+  <!-- Corner Ornaments -->
+  <circle cx="72" cy="72" r="10" fill="url(#goldGrad)" />
+  <circle cx="440" cy="72" r="10" fill="url(#goldGrad)" />
+  <circle cx="72" cy="440" r="10" fill="url(#goldGrad)" />
+  <circle cx="440" cy="440" r="10" fill="url(#goldGrad)" />
+
+  <!-- Center Open Mushaf Quran Book -->
+  <g filter="url(#shadow)">
+    <!-- Book Spine Glow -->
+    <path d="M 256 180 L 256 360" stroke="url(#goldGrad)" stroke-width="12" stroke-linecap="round" />
+
+    <!-- Left Page -->
+    <path d="M 250 185 C 190 170, 130 190, 100 200 L 100 350 C 130 340, 190 320, 250 335 Z" fill="#ffffff" opacity="0.96" />
+    <!-- Right Page -->
+    <path d="M 262 185 C 322 170, 382 190, 412 200 L 412 350 C 382 340, 322 320, 262 335 Z" fill="#ffffff" opacity="0.96" />
+
+    <!-- Left Book Cover Underlay -->
+    <path d="M 248 178 C 188 162, 126 183, 92 195 L 92 356 C 126 344, 188 323, 248 339 Z" fill="url(#goldGrad)" opacity="0.8" style="mix-blend-mode: multiply;" />
+    <!-- Right Book Cover Underlay -->
+    <path d="M 264 178 C 324 162, 386 183, 420 195 L 420 356 C 386 344, 324 323, 264 339 Z" fill="url(#goldGrad)" opacity="0.8" style="mix-blend-mode: multiply;" />
+
+    <!-- Decorative Calligraphy / Lines on Left Page -->
+    <line x1="125" y1="225" x2="225" y2="215" stroke="#d4af37" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+    <line x1="130" y1="250" x2="220" y2="242" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+    <line x1="135" y1="275" x2="215" y2="269" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+    <line x1="140" y1="300" x2="210" y2="295" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+
+    <!-- Decorative Calligraphy / Lines on Right Page -->
+    <line x1="287" y1="215" x2="387" y2="225" stroke="#d4af37" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+    <line x1="292" y1="242" x2="382" y2="250" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+    <line x1="297" y1="269" x2="377" y2="275" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+    <line x1="302" y1="295" x2="372" y2="300" stroke="#047857" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+
+    <!-- Center Gold Bookmark Ribbon -->
+    <path d="M 256 175 L 256 380 L 244 365 L 232 380 L 232 175 Z" fill="url(#goldGrad)" />
+  </g>
+</svg>

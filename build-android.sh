@@ -5,36 +5,65 @@ echo "   أداة تحويل التطبيق (PWA) إلى تطبيق أندروي
 echo "================================================="
 echo "تستخدم هذه الأداة Bubblewrap لتحويل موقعك إلى تطبيق أندرويد حقيقي."
 echo ""
-echo "المتطلبات الأساسية قبل البدء:"
-echo "1. يجب أن يكون لديك Java Development Kit (JDK) 17 مثبتاً."
-echo "2. يجب أن يكون لديك Node.js مثبتاً."
-echo "3. يجب أن يكون التطبيق منشوراً على الإنترنت (لديه رابط https)."
+
+# الرابط العام المنشور (ais-pre-*)
+PUBLIC_HOST="ais-pre-onwvyflreacnxpk3rfa2zc-746375125740.europe-west2.run.app"
+APP_URL="https://${PUBLIC_HOST}"
+
+echo "الرابط العام المنشور للتطبيق: $APP_URL"
 echo ""
 
-APP_URL="https://ais-pre-onwvyflreacnxpk3rfa2zc-746375125740.europe-west2.run.app"
-
-echo "الرابط الحالي للتطبيق هو: $APP_URL"
-echo "إذا كنت ترغب في تغييره، قم بتعديل هذا الملف."
-echo ""
-echo "جاري تهيئة مشروع الأندرويد..."
-echo "سيُطلب منك إدخال بعض المعلومات مثل كلمات المرور للمفاتيح (تذكرها جيداً)."
-echo ""
-
-# إنشاء مجلد للمشروع
 mkdir -p android-app
 cd android-app
 
-# تشغيل Bubblewrap لتهيئة المشروع وبنائه
-npx @bubblewrap/cli init --manifest="$APP_URL/manifest.json"
+echo "إنشاء ملف twa-manifest.json بالرابط العام والمواصفات الصحيحة..."
+cat << EOF > twa-manifest.json
+{
+  "packageId": "com.mushafpro.app",
+  "host": "$PUBLIC_HOST",
+  "name": "القرآن الكريم - المصحف الاحترافي",
+  "launcherName": "المصحف",
+  "display": "standalone",
+  "themeColor": "#10B981",
+  "navigationColor": "#10B981",
+  "navigationColorDark": "#10B981",
+  "navigationDividerColor": "#10B981",
+  "navigationDividerColorDark": "#10B981",
+  "backgroundColor": "#10B981",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "$APP_URL/icon-512.png",
+  "maskableIconUrl": "$APP_URL/icon-512.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": "true",
+  "isChromeOSOnly": false,
+  "isSplashScreenFadeOutEnabled": true,
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersion": "1.0.0"
+}
+EOF
+
+echo "جاري تحديث واستخراج مشروع الأندرويد..."
+npx @bubblewrap/cli update --skipPrompt
 
 echo ""
-echo "تم تهيئة المشروع بنجاح!"
 echo "جاري بناء ملف الـ APK..."
-echo ""
-
 npx @bubblewrap/cli build
 
 echo ""
 echo "================================================="
-echo "تم الانتهاء! ستجد ملف الـ APK (app-release-signed.apk) جاهزاً للتثبيت في مجلد android-app"
+echo "تم الانتهاء بنجاح! ستجد ملف الـ APK باسم app-release-signed.apk في مجلد android-app"
 echo "================================================="
+

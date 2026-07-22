@@ -220,8 +220,8 @@ const QuranPage = React.memo(({
                                     whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.08)' }}
                                     className={`
                                         cursor-pointer transition-all duration-300 decoration-clone px-1.5 py-0.5 rounded-lg leading-[2.8]
-                                        ${isPlaying ? 'bg-emerald-500/15 text-emerald-900 dark:text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-emerald-500/30' : ''}
-                                        ${isActive ? 'bg-emerald-600/25 text-emerald-900 dark:text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.2)] ring-2 ring-emerald-600/40' : ''}
+                                        ${isPlaying ? 'bg-emerald-500/15 text-emerald-950 dark:bg-emerald-900/50 dark:text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/40 dark:ring-emerald-400/60 font-medium' : ''}
+                                        ${isActive ? 'bg-emerald-500/25 text-emerald-950 dark:bg-emerald-800/60 dark:text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.3)] ring-2 ring-emerald-600/50 dark:ring-emerald-400/80 font-bold' : ''}
                                     `}
                                     onClick={(e) => {
                                         e.stopPropagation();

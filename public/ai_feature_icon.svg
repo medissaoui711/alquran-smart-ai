@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="aiBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </linearGradient>
+    <linearGradient id="aiGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="80" fill="url(#aiBg)" />
+  <!-- Sparkle Star -->
+  <path d="M 200 60 C 200 140, 260 200, 340 200 C 260 200, 200 260, 200 340 C 200 260, 140 200, 60 200 C 140 200, 200 140, 200 60 Z" fill="url(#aiGold)" />
+  <circle cx="300" cy="100" r="16" fill="url(#aiGold)" opacity="0.8" />
+</svg>

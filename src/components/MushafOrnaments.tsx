@@ -67,7 +67,7 @@ export const ClassicAyahMarker: React.FC<{ number: number; onClick?: (e: React.M
           fontSize="11" 
           fontWeight="bold" 
           fill="currentColor"
-          className="font-sans dark:fill-emerald-400"
+          className="font-sans dark:fill-emerald-300"
         >
           {number.toLocaleString('ar-EG')}
         </text>

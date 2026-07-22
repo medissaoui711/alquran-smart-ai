@@ -78,7 +78,7 @@ const SidebarMenuDropdown: React.FC<SidebarMenuDropdownProps> = ({
       {isInstallable && (
         <button 
           onClick={handleInstallClick} 
-          className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-colors border-b border-theme-border bg-emerald-50 dark:bg-emerald-900/10"
+          className="w-full text-right px-4 py-3 hover:bg-theme-surface-hover flex items-center gap-3 text-sm font-bold text-emerald-600 dark:text-emerald-300 transition-colors border-b border-theme-border bg-emerald-50 dark:bg-emerald-900/10"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

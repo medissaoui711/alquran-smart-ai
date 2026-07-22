@@ -177,7 +177,7 @@ const Sidebar: React.FC = () => {
                                   setSidebarCollapsed(true);
                               }
                           }}
-                          className="p-2 hover:bg-theme-surface-hover active:scale-95 rounded-full transition-all text-emerald-600 dark:text-emerald-400"
+                          className="p-2 hover:bg-theme-surface-hover active:scale-95 rounded-full transition-all text-emerald-600 dark:text-emerald-300"
                           title="أكمل القراءة"
                       >
                           <BookIcon className="w-6 h-6" />

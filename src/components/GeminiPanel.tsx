@@ -73,7 +73,7 @@ const GeminiPanel: React.FC<GeminiPanelProps> = ({ isOpen, onClose, surah }) => 
                 <div className="h-32 bg-theme-surface-hover rounded-lg"></div>
               </div>
             ) : (
-              <div className="prose prose-stone dark:prose-invert prose-headings:font-serif prose-headings:text-emerald-800 dark:prose-headings:text-emerald-400 prose-p:text-stone-600 dark:prose-p:text-stone-300 prose-li:text-stone-600 dark:prose-li:text-stone-300 font-serif leading-loose" dir="rtl">
+              <div className="prose prose-stone dark:prose-invert prose-headings:font-serif prose-headings:text-emerald-800 dark:prose-headings:text-emerald-300 prose-p:text-stone-600 dark:prose-p:text-stone-300 prose-li:text-stone-600 dark:prose-li:text-stone-300 font-serif leading-loose" dir="rtl">
                  <ReactMarkdown>{insight}</ReactMarkdown>
               </div>
             )}
