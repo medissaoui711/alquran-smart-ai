@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './components/Sidebar';
 import MushafView from './components/MushafView';
@@ -6,6 +6,7 @@ import GeminiPanel from './components/GeminiPanel';
 import HelpModal from './components/HelpModal';
 import AboutModal from './components/AboutModal';
 import AiTermsModal from './components/AiTermsModal';
+import { SplashScreen } from './components/SplashScreen';
 import { useQuranStore, useSettingsStore, useUIStore } from './store';
 import { BookmarkIcon } from './components/Icons';
 import { ModalContainer } from './components/ModalContainer';
@@ -23,6 +24,7 @@ import { useResponsive } from './hooks/useResponsive';
 function App() {
   const { fetchSurahList, error } = useQuranStore();
   const { showUpdate, updateApp } = usePWA();
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize Logical Hooks
   useTheme();
@@ -37,21 +39,25 @@ function App() {
   }, [fetchSurahList]);
 
   return (
-    <MainLayout>
-      {error ? (
-        <ErrorMessage error={error} />
-      ) : (
-        <MushafView />
-      )}
+    <>
+      {showSplash && <SplashScreen onFinished={() => setShowSplash(false)} minDuration={1600} />}
       
-      {/* Global Overlays */}
-      <GeminiPanel />
-      <HelpModal />
-      <AboutModal />
-      <AiTermsModal />
-      <ModalContainer />
-      <PWAUpdate show={showUpdate} onUpdate={updateApp} />
-    </MainLayout>
+      <MainLayout>
+        {error ? (
+          <ErrorMessage error={error} />
+        ) : (
+          <MushafView />
+        )}
+        
+        {/* Global Overlays */}
+        <GeminiPanel />
+        <HelpModal />
+        <AboutModal />
+        <AiTermsModal />
+        <ModalContainer />
+        <PWAUpdate show={showUpdate} onUpdate={updateApp} />
+      </MainLayout>
+    </>
   );
 }
 

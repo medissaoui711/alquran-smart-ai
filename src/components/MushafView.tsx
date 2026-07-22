@@ -701,26 +701,28 @@ const MushafView: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="relative z-10 max-w-sm w-full flex flex-col items-center"
           >
-            {/* The Mushaf Cover Image */}
-            <div className="relative mb-10 group">
+            {/* Minimalist Vector Islamic Emblem */}
+            <div className="relative mb-8 flex items-center justify-center">
                 <motion.div 
                     animate={{ 
-                        boxShadow: ["0 20px 50px rgba(0,0,0,0.2)", "0 30px 60px rgba(16,185,129,0.2)", "0 20px 50px rgba(0,0,0,0.2)"] 
+                        scale: [1, 1.04, 1],
                     }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-48 md:w-64 aspect-[3/4] rounded-xl overflow-hidden border-[6px] border-stone-800 shadow-2xl relative"
+                    className="w-28 h-28 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-800 to-teal-950 p-1 shadow-2xl shadow-emerald-900/30 ring-1 ring-emerald-500/30 flex items-center justify-center relative"
                 >
-                    <img 
-                        src="/mushaf_cover.jpg" 
-                        alt="المصحف الشريف" 
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                        referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none" />
+                    <div className="w-full h-full rounded-[22px] bg-stone-900/90 backdrop-blur-md flex items-center justify-center border border-emerald-500/30 relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-300 via-emerald-500 to-transparent" />
+                        <svg className="w-14 h-14 md:w-18 md:h-18 text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                            <path d="M12 6v8" stroke="#fef08a" strokeWidth="1.5" />
+                            <path d="M9 9h6" stroke="#fef08a" strokeWidth="1.5" />
+                        </svg>
+                    </div>
                 </motion.div>
                 
-                {/* Decorative glow */}
-                <div className="absolute -inset-4 bg-emerald-500/10 blur-3xl rounded-full -z-10 animate-pulse" />
+                {/* Decorative soft glow */}
+                <div className="absolute -inset-6 bg-emerald-500/15 blur-3xl rounded-full -z-10 animate-pulse" />
             </div>
 
             <h2 className="text-3xl md:text-4xl font-amiri font-bold text-emerald-900 dark:text-emerald-100 mb-4 tracking-wide">المصحف الشريف</h2>
