@@ -11,6 +11,13 @@ const pad = (n: number, len: number) => String(n).padStart(len, '0');
 
 export const RECITERS: Reciter[] = [
   {
+    id: 'alaa_aql',
+    name: 'علاء عقل',
+    subtext: 'تلاوة خاشعة مرتلة (سورة كاملة)',
+    type: 'surah',
+    getSurahAudioUrl: (surahNum: number) => `https://archive.org/download/AlaaAql/${pad(surahNum, 3)}.mp3`
+  },
+  {
     id: 'alafasy',
     name: 'مشاري راشد العفاسي',
     subtext: 'تلاوة آية بآية (تزامن دقيق 100%)',
@@ -89,17 +96,10 @@ export const RECITERS: Reciter[] = [
     type: 'ayah',
     getAyahAudioUrl: (surahNum: number, ayahNum: number) => 
       `https://everyayah.com/data/Hudhaify_128kbps/${pad(surahNum, 3)}${pad(ayahNum, 3)}.mp3`
-  },
-  {
-    id: 'alaa_aql',
-    name: 'علاء عقل',
-    subtext: 'تلاوة خاشعة مرتلة (سورة كاملة)',
-    type: 'surah',
-    getSurahAudioUrl: (surahNum: number) => `https://archive.org/download/AlaaAql/${pad(surahNum, 3)}.mp3`
   }
 ];
 
-export const DEFAULT_RECITER_ID = 'alafasy';
+export const DEFAULT_RECITER_ID = 'alaa_aql';
 
 export function getReciterById(id: string): Reciter {
   return RECITERS.find(r => r.id === id) || RECITERS[0];
