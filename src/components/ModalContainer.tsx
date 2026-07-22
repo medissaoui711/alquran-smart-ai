@@ -1,36 +1,56 @@
 import React from 'react';
-import GeminiPanel from './GeminiPanel';
 import HelpModal from './HelpModal';
 import AboutModal from './AboutModal';
 import AiTermsModal from './AiTermsModal';
-import { useQuranStore, useUIStore } from '../store';
+import { OfflineInvitationModal } from './OfflineInvitationModal';
+import { OfflineManagerModal } from './OfflineManagerModal';
+import { useUIStore } from '../store';
 
 /**
  * Centralized container for all application modals and side panels.
  * Listens to the UI store to determine which modal to render.
  */
 export const ModalContainer: React.FC = () => {
-  const { loadedSurahs } = useQuranStore();
   const { activeModal, closeModal } = useUIStore();
 
-  if (activeModal === 'none' || activeModal === 'gemini') return null;
+  const isStandardModalOpen = activeModal === 'help' || activeModal === 'about' || activeModal === 'aiTerms';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <HelpModal 
-        isOpen={activeModal === 'help'}
-        onClose={closeModal}
-      />
+    <>
+      {isStandardModalOpen && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={closeModal}
+        >
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl flex justify-center">
+            {activeModal === 'help' && (
+              <HelpModal 
+                isOpen={true}
+                onClose={closeModal}
+              />
+            )}
 
-      <AboutModal
-        isOpen={activeModal === 'about'}
-        onClose={closeModal}
-      />
+            {activeModal === 'about' && (
+              <AboutModal
+                isOpen={true}
+                onClose={closeModal}
+              />
+            )}
 
-      <AiTermsModal
-        isOpen={activeModal === 'aiTerms'}
-        onClose={closeModal}
-      />
-    </div>
+            {activeModal === 'aiTerms' && (
+              <AiTermsModal
+                isOpen={true}
+                onClose={closeModal}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <OfflineInvitationModal />
+      <OfflineManagerModal />
+    </>
   );
 };
+
+

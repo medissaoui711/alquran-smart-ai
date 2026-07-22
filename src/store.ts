@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { Surah, SurahDetail, Bookmark } from './types';
 import { fetchSurahDetails, fetchSurahList } from './services/quranService';
 
+import { DEFAULT_RECITER_ID } from './data/reciters';
+
 // --- Settings Store ---
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -10,9 +12,11 @@ interface SettingsState {
   theme: ThemeMode;
   fontSize: number;
   fontType: string;
+  reciterId: string;
   setTheme: (theme: ThemeMode) => void;
   setFontSize: (size: number) => void;
   setFontType: (type: string) => void;
+  setReciterId: (reciterId: string) => void;
 }
 
 const applyTheme = (theme: ThemeMode) => {
@@ -30,12 +34,14 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'system',
       fontSize: 26,
       fontType: 'Amiri',
+      reciterId: DEFAULT_RECITER_ID,
       setTheme: (theme) => set(() => {
         applyTheme(theme);
         return { theme };
       }),
       setFontSize: (size) => set({ fontSize: size }),
       setFontType: (type) => set({ fontType: type }),
+      setReciterId: (id) => set({ reciterId: id }),
     }),
     {
       name: 'quran_settings',
@@ -50,10 +56,12 @@ export const useSettingsStore = create<SettingsState>()(
 interface UIState {
   isSidebarCollapsed: boolean;
   isDrawerOpen: boolean;
-  activeModal: 'none' | 'help' | 'about' | 'aiTerms' | 'gemini';
+  activeModal: 'none' | 'help' | 'about' | 'aiTerms' | 'gemini' | 'offlineManager' | 'offlinePrompt';
+  pendingOfflineSurah: { surahNumber: number; surahName: string } | null;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setDrawerOpen: (open: boolean) => void;
-  openModal: (modal: 'help' | 'about' | 'aiTerms' | 'gemini') => void;
+  openModal: (modal: 'help' | 'about' | 'aiTerms' | 'gemini' | 'offlineManager' | 'offlinePrompt') => void;
+  openOfflinePrompt: (surahNumber: number, surahName: string) => void;
   closeModal: () => void;
   isMobile: boolean;
   isTablet: boolean;
@@ -67,10 +75,16 @@ export const useUIStore = create<UIState>((set) => ({
   isSidebarCollapsed: false,
   isDrawerOpen: false,
   activeModal: 'none',
+  pendingOfflineSurah: null,
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
   setDrawerOpen: (open) => set({ isDrawerOpen: open }),
   openModal: (modal) => set({ activeModal: modal, isDrawerOpen: false }),
-  closeModal: () => set({ activeModal: 'none' }),
+  openOfflinePrompt: (surahNumber, surahName) => set({ 
+    activeModal: 'offlinePrompt', 
+    pendingOfflineSurah: { surahNumber, surahName }, 
+    isDrawerOpen: false 
+  }),
+  closeModal: () => set({ activeModal: 'none', pendingOfflineSurah: null }),
   isMobile: window.innerWidth < 640,
   isTablet: window.innerWidth >= 640 && window.innerWidth < 1024,
   isDesktop: window.innerWidth >= 1024,

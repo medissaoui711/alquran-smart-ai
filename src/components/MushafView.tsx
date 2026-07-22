@@ -9,6 +9,9 @@ import {
 import { getAyahExplanation } from '../services/geminiService';
 import { ClassicSurahHeader, ClassicAyahMarker, ClassicBismillah } from './MushafOrnaments';
 import { useQuranStore, useSettingsStore, useUIStore } from '../store';
+import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { getReciterById, RECITERS } from '../data/reciters';
+import { isSurahOfflineReady } from '../services/offlineService';
 
 // Helper interface
 interface FlatAyah extends Ayah {
@@ -17,6 +20,75 @@ interface FlatAyah extends Ayah {
   isFirstAyahOfSurah: boolean;
   surahRevelation: string;
 }
+
+// Clean Arabic text helper & Tajweed duration weighting (accounts for Shaddah, Madd, Tanween)
+const getTajweedWeight = (text: string): number => {
+  if (!text) return 0;
+  
+  // Base clean character length (without diacritics)
+  const cleanLen = text.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '').length;
+  
+  // Tajweed Extensions:
+  // Shaddah (ّ)
+  const shaddahCount = (text.match(/\u0651/g) || []).length;
+  // Madd marks (ٰ, آ, ~, \u0670, \u0653)
+  const maddCount = (text.match(/[\u0670\u0653آٰ~]/g) || []).length;
+  // Tanween (\u064B, \u064C, \u064D)
+  const tanweenCount = (text.match(/[\u064B\u064C\u064D]/g) || []).length;
+
+  const weightedLetters = cleanLen + (shaddahCount * 0.8) + (maddCount * 1.4) + (tanweenCount * 0.5);
+  
+  // Minimal breath pause (Waqf) between verses (~3.5 character units)
+  const VERSE_PAUSE_WEIGHT = 3.5;
+
+  return weightedLetters + VERSE_PAUSE_WEIGHT;
+};
+
+interface AyahTimingItem {
+  ayahNum: number;
+  page: number;
+  startTime: number;
+  endTime: number;
+}
+
+// Computes precise relative timing boundaries for every verse in a full-surah audio stream
+const getSurahAyahTimingMap = (surahObj: any, duration: number): AyahTimingItem[] => {
+  if (!surahObj || !surahObj.ayahs || surahObj.ayahs.length === 0 || !duration || duration <= 0) {
+    return [];
+  }
+
+  const surahNum = surahObj.number;
+  // Surah 1 (Al-Fatiha) includes Bismillah as Ayah 1; Surah 9 (At-Tawbah) has no Bismillah
+  const hasBismillah = surahNum !== 1 && surahNum !== 9;
+
+  // Bismillah weight (~18 weight units = ~2.2 seconds)
+  const BISMILLAH_WEIGHT = hasBismillah ? 18 : 0;
+
+  const ayahWeights = surahObj.ayahs.map((a: any) => getTajweedWeight(a.text));
+  const totalAyahWeight = ayahWeights.reduce((sum: number, w: number) => sum + w, 0);
+  const totalWeight = BISMILLAH_WEIGHT + totalAyahWeight;
+
+  if (totalWeight <= 0) return [];
+
+  let cumulativeWeight = BISMILLAH_WEIGHT;
+  const map: AyahTimingItem[] = [];
+
+  for (let i = 0; i < surahObj.ayahs.length; i++) {
+    const ayah = surahObj.ayahs[i];
+    const startTime = (cumulativeWeight / totalWeight) * duration;
+    cumulativeWeight += ayahWeights[i];
+    const endTime = i === surahObj.ayahs.length - 1 ? duration : (cumulativeWeight / totalWeight) * duration;
+
+    map.push({
+      ayahNum: ayah.numberInSurah,
+      page: ayah.page,
+      startTime,
+      endTime
+    });
+  }
+
+  return map;
+};
 
 const AyahPopover = ({ 
     ayah, 
@@ -136,12 +208,51 @@ const AyahPopover = ({
     );
 };
 
+const AyahHighlightSpan: React.FC<{
+    isPlaying: boolean;
+    isActive: boolean;
+    displayText: string;
+    onClick: (e: React.MouseEvent) => void;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+}> = ({ isPlaying, isActive, displayText, onClick, onMouseEnter, onMouseLeave }) => {
+    const spanRef = useRef<HTMLSpanElement>(null);
+
+    useEffect(() => {
+        if (isPlaying && spanRef.current) {
+            spanRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'nearest'
+            });
+        }
+    }, [isPlaying]);
+
+    return (
+        <motion.span 
+            ref={spanRef}
+            whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.08)' }}
+            className={`
+                cursor-pointer transition-all duration-300 decoration-clone px-1.5 py-0.5 rounded-lg leading-[2.8] inline
+                ${isPlaying ? 'bg-emerald-500/25 text-emerald-950 dark:bg-emerald-800/80 dark:text-emerald-50 shadow-[0_0_18px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/70 dark:ring-emerald-400 font-bold' : ''}
+                ${isActive ? 'bg-emerald-500/30 text-emerald-950 dark:bg-emerald-800/70 dark:text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.3)] ring-2 ring-emerald-600/60 dark:ring-emerald-400/80 font-bold' : ''}
+            `}
+            onClick={onClick}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            title="خيارات الآية"
+        >
+            {displayText}
+        </motion.span>
+    );
+};
+
 const QuranPage = React.memo(({ 
     pageNumber, 
     ayahs, 
-    playingAyahKey,
-    activeAyahKey,
-    onAyahClick,
+    playingAyahKey, 
+    activeAyahKey, 
+    onAyahClick, 
     onAyahTafsir,
     setHoveredAyah,
     isLeftPage,
@@ -216,23 +327,17 @@ const QuranPage = React.memo(({
                                     </div>
                                 )}
 
-                                <motion.span 
-                                    whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.08)' }}
-                                    className={`
-                                        cursor-pointer transition-all duration-300 decoration-clone px-1.5 py-0.5 rounded-lg leading-[2.8]
-                                        ${isPlaying ? 'bg-emerald-500/15 text-emerald-950 dark:bg-emerald-900/50 dark:text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/40 dark:ring-emerald-400/60 font-medium' : ''}
-                                        ${isActive ? 'bg-emerald-500/25 text-emerald-950 dark:bg-emerald-800/60 dark:text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.3)] ring-2 ring-emerald-600/50 dark:ring-emerald-400/80 font-bold' : ''}
-                                    `}
+                                <AyahHighlightSpan 
+                                    isPlaying={isPlaying}
+                                    isActive={isActive}
+                                    displayText={displayText}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onAyahClick(e, ayah);
                                     }}
                                     onMouseEnter={() => setHoveredAyah(ayah.number)}
                                     onMouseLeave={() => setHoveredAyah(null)}
-                                    title="خيارات الآية"
-                                >
-                                    {displayText}
-                                </motion.span>
+                                />
                                 <ClassicAyahMarker 
                                     number={ayah.numberInSurah} 
                                     onClick={(e) => onAyahTafsir(e, ayah.surahName, ayah)}
@@ -265,8 +370,11 @@ const MushafView: React.FC = () => {
     activeAyah,
     setActiveAyah 
   } = useQuranStore();
-  const { fontSize, fontType, theme, setTheme } = useSettingsStore();
-  const { isMobile, isTablet, isDesktop, openModal, showSplash, setShowSplash, setDrawerOpen } = useUIStore();
+  const { fontSize, fontType, theme, setTheme, reciterId, setReciterId } = useSettingsStore();
+  const { isMobile, isTablet, isDesktop, openModal, openOfflinePrompt, showSplash, setShowSplash, setDrawerOpen } = useUIStore();
+  const isOffline = useOfflineStatus();
+
+  const activeReciter = getReciterById(reciterId);
 
   const isBookmarked = loadedSurahs.length > 0 && bookmarks.some(b => b.surahNumber === loadedSurahs[0].number);
 
@@ -333,12 +441,24 @@ const MushafView: React.FC = () => {
 
   // Audio State & Refs
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayerMinimized, setIsPlayerMinimized] = useState(false);
   const [playingState, setPlayingState] = useState<{ surah: number, ayah: number } | null>(null);
-  
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [isCurrentSurahOffline, setIsCurrentSurahOffline] = useState(false);
+
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const nextAudioRef = useRef<HTMLAudioElement | null>(null); // For pre-fetching
   const playAyahRef = useRef<(s: number, a: number) => void>(() => {});
   const audioContextRef = useRef<AudioContext | null>(null); // For Safari Unlock
+
+  // Check offline readiness for current surah
+  useEffect(() => {
+    if (loadedSurahs.length > 0) {
+      isSurahOfflineReady(loadedSurahs[0].number, reciterId).then(setIsCurrentSurahOffline);
+    }
+  }, [loadedSurahs, reciterId]);
 
   // Interaction State
   const [popoverContent, setPopoverContent] = useState<string | null>(null);
@@ -487,6 +607,12 @@ const MushafView: React.FC = () => {
   };
 
   const preloadNextAyah = useCallback((surahNum: number, ayahNum: number) => {
+      const reciter = getReciterById(useSettingsStore.getState().reciterId);
+      if (reciter.type !== 'ayah') {
+          nextAudioRef.current = null;
+          return;
+      }
+
       const currentSurah = surahsRef.current.find(s => s.number === surahNum);
       if (!currentSurah) return;
 
@@ -499,20 +625,14 @@ const MushafView: React.FC = () => {
           nextAyahNum = 1;
       }
 
-      // Find URL for next Ayah from pages
-      let targetAyah: FlatAyah | undefined;
-      for (const pAyahs of pagesRef.current.values()) {
-          const found = pAyahs.find(a => a.surahNumber === nextSurahNum && a.numberInSurah === nextAyahNum);
-          if (found) {
-              targetAyah = found;
-              break;
-          }
+      let nextAudioUrl = '';
+      if (reciter.getAyahAudioUrl) {
+          nextAudioUrl = reciter.getAyahAudioUrl(nextSurahNum, nextAyahNum);
       }
 
-      if (targetAyah) {
-          const audio = new Audio(targetAyah.audio);
+      if (nextAudioUrl) {
+          const audio = new Audio(nextAudioUrl);
           audio.preload = 'auto';
-          audio.load(); 
           nextAudioRef.current = audio;
       } else {
           nextAudioRef.current = null;
@@ -520,7 +640,7 @@ const MushafView: React.FC = () => {
   }, []);
 
   const playAyah = useCallback((surahNum: number, ayahNum: number) => {
-      unlockAudioContext(); // Just in case
+      unlockAudioContext();
 
       // Find Ayah Data in current pages
       let targetAyah: FlatAyah | undefined;
@@ -535,10 +655,8 @@ const MushafView: React.FC = () => {
           }
       }
 
-      // If Ayah not found (e.g., end of loaded content)
       if (!targetAyah) {
           const maxLoadedSurah = Math.max(...surahsRef.current.map(s => s.number));
-          // If requested surah is beyond what we have, try to load it
           if (surahNum > maxLoadedSurah) {
              loadNextSurah();
           }
@@ -546,69 +664,199 @@ const MushafView: React.FC = () => {
           return;
       }
 
-      // 1. Handle Page Flipping
-      setCurrentRightPage(curr => {
-        if (!isMobile) {
-            const neededRightPage = foundPage % 2 !== 0 ? foundPage : foundPage - 1;
-            return curr !== neededRightPage ? neededRightPage : curr;
-        } else {
-             return curr !== foundPage ? foundPage : curr;
-        }
-      });
+      // Handle Page Flipping
+      if (foundPage > 0) {
+        setCurrentRightPage(curr => {
+          if (!isMobile) {
+              const neededRightPage = foundPage % 2 !== 0 ? foundPage : foundPage - 1;
+              return curr !== neededRightPage ? neededRightPage : curr;
+          } else {
+               return curr !== foundPage ? foundPage : curr;
+          }
+        });
+      }
 
-      // 2. Handle Audio Object
+      const reciter = getReciterById(reciterId);
+
+      // Fast seek if surah-based audio is already loaded and playing the same surah
+      if (reciter.type === 'surah' && currentAudioRef.current && playingState?.surah === surahNum && currentAudioRef.current.duration > 0) {
+          const surahObj = surahsRef.current.find(s => s.number === surahNum);
+          if (surahObj) {
+              const timingMap = getSurahAyahTimingMap(surahObj, currentAudioRef.current.duration);
+              const targetTiming = timingMap.find(m => m.ayahNum === ayahNum);
+              if (targetTiming) {
+                  currentAudioRef.current.currentTime = targetTiming.startTime;
+                  setAudioCurrentTime(targetTiming.startTime);
+                  setPlayingState({ surah: surahNum, ayah: ayahNum });
+                  if (currentAudioRef.current.paused) {
+                      currentAudioRef.current.play().catch(() => {});
+                      setIsPlaying(true);
+                  }
+                  return;
+              }
+          }
+      }
+
+      // Stop previous audio safely if switching surah or audio stream
       if (currentAudioRef.current) {
-          currentAudioRef.current.pause();
+          const prevAudio = currentAudioRef.current;
+          prevAudio.onended = null;
+          prevAudio.onerror = null;
+          prevAudio.ontimeupdate = null;
+          prevAudio.onloadedmetadata = null;
+          try {
+              prevAudio.pause();
+          } catch (e) {
+              // ignore pause errors on interrupted audio
+          }
+      }
+
+      // Determine Audio URL based on selected reciter
+      let audioUrl = '';
+      if (reciter.type === 'surah' && reciter.getSurahAudioUrl) {
+          audioUrl = reciter.getSurahAudioUrl(surahNum);
+      } else if (reciter.type === 'ayah' && reciter.getAyahAudioUrl) {
+          audioUrl = reciter.getAyahAudioUrl(surahNum, ayahNum);
+      } else {
+          audioUrl = targetAyah.audio;
       }
 
       let audio: HTMLAudioElement;
-      
-      // Check if preloaded audio matches the requested one
-      if (nextAudioRef.current && nextAudioRef.current.src === targetAyah.audio) {
+      if (nextAudioRef.current && nextAudioRef.current.src === audioUrl) {
           audio = nextAudioRef.current;
-          nextAudioRef.current = null; // Consume it
+          nextAudioRef.current = null;
       } else {
-          audio = new Audio(targetAyah.audio);
+          audio = new Audio(audioUrl);
           audio.preload = 'auto';
       }
 
+      audio.playbackRate = playbackRate;
       currentAudioRef.current = audio;
       setPlayingState({ surah: surahNum, ayah: ayahNum });
       setIsPlaying(true);
 
-      // 3. Preload the *next* verse immediately
-      preloadNextAyah(surahNum, ayahNum);
+      audio.ontimeupdate = () => {
+          setAudioCurrentTime(audio.currentTime);
 
-      // 4. Setup Events
+          if (reciter.type === 'surah' && audio.duration > 0) {
+              const surahObj = surahsRef.current.find(s => s.number === surahNum);
+              if (surahObj) {
+                  const timingMap = getSurahAyahTimingMap(surahObj, audio.duration);
+                  if (timingMap.length > 0) {
+                      // 1.4s advance sync lead ensures the highlight transitions to the next verse BEFORE or EXACTLY as the qari begins pronouncing it, completely eliminating lag
+                      const SYNC_LEAD = 1.4;
+                      const checkTime = audio.currentTime + SYNC_LEAD;
+
+                      let matchedItem = timingMap.find(item => checkTime >= item.startTime && checkTime < item.endTime);
+                      if (!matchedItem && checkTime >= timingMap[timingMap.length - 1].endTime) {
+                          matchedItem = timingMap[timingMap.length - 1];
+                      }
+                      if (!matchedItem && checkTime < timingMap[0].startTime) {
+                          matchedItem = timingMap[0];
+                      }
+
+                      if (matchedItem) {
+                          const matchedAyah = matchedItem.ayahNum;
+                          const matchedPage = matchedItem.page;
+
+                          setPlayingState(prev => {
+                              if (!prev || prev.surah !== surahNum || prev.ayah !== matchedAyah) {
+                                  if (matchedPage > 0) {
+                                      setCurrentRightPage(curr => {
+                                          if (!isMobile) {
+                                              const needed = matchedPage % 2 !== 0 ? matchedPage : matchedPage - 1;
+                                              return curr !== needed ? needed : curr;
+                                          } else {
+                                              return curr !== matchedPage ? matchedPage : curr;
+                                          }
+                                      });
+                                  }
+                                  return { surah: surahNum, ayah: matchedAyah };
+                              }
+                              return prev;
+                          });
+                      }
+                  }
+              }
+          }
+      };
+
+      audio.onloadedmetadata = () => {
+          setAudioDuration(audio.duration || 0);
+
+          if (reciter.type === 'surah' && audio.duration > 0 && ayahNum > 1) {
+              const surahObj = surahsRef.current.find(s => s.number === surahNum);
+              if (surahObj) {
+                  const timingMap = getSurahAyahTimingMap(surahObj, audio.duration);
+                  const targetTiming = timingMap.find(m => m.ayahNum === ayahNum);
+                  if (targetTiming) {
+                      audio.currentTime = targetTiming.startTime;
+                      setAudioCurrentTime(targetTiming.startTime);
+                  }
+              }
+          }
+
+          audio.play().catch(e => {
+              console.warn("Audio play error:", e);
+              setIsPlaying(false);
+          });
+      };
+
+      // Preload next audio if ayah-by-ayah mode
+      if (reciter.type === 'ayah') {
+          preloadNextAyah(surahNum, ayahNum);
+      }
+
       audio.onended = () => {
           const surahInfo = surahsRef.current.find(s => s.number === surahNum);
-          if (surahInfo) {
+          if (reciter.type === 'ayah' && surahInfo) {
             if (ayahNum < surahInfo.numberOfAyahs) {
-                // Next Ayah in same Surah
                 playAyahRef.current(surahNum, ayahNum + 1);
             } else {
-                // First Ayah of Next Surah
                 playAyahRef.current(surahNum + 1, 1);
             }
+          } else if (reciter.type === 'surah') {
+            playAyahRef.current(surahNum + 1, 1);
           } else {
             setIsPlaying(false);
           }
       };
 
       audio.onerror = (e) => {
-          console.error("Audio Playback Error", e);
+          console.warn("Audio playback issue for URL:", audioUrl, e);
           setIsPlaying(false);
+
+          // Fallback to default ayah audio if custom reciter failed
+          if (targetAyah && targetAyah.audio && targetAyah.audio !== audioUrl) {
+              const fallbackAudio = new Audio(targetAyah.audio);
+              fallbackAudio.playbackRate = playbackRate;
+              currentAudioRef.current = fallbackAudio;
+              fallbackAudio.ontimeupdate = () => setAudioCurrentTime(fallbackAudio.currentTime);
+              fallbackAudio.onloadedmetadata = () => setAudioDuration(fallbackAudio.duration || 0);
+              fallbackAudio.onended = () => setIsPlaying(false);
+              fallbackAudio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+              return;
+          }
+
+          if (isOffline) {
+              const surahInfo = surahsRef.current.find(s => s.number === surahNum);
+              if (surahInfo) {
+                  openOfflinePrompt(surahInfo.number, surahInfo.name);
+              }
+          }
       };
       
       const playPromise = audio.play();
       if (playPromise !== undefined) {
           playPromise.catch(e => {
-              console.warn("Play prevented (User interaction needed on Safari):", e);
+              if (e.name !== 'AbortError') {
+                  console.warn("Play prevented or interrupted:", e);
+              }
               setIsPlaying(false);
           });
       }
 
-  }, [isMobile, loadNextSurah, preloadNextAyah, unlockAudioContext]); 
+  }, [isMobile, reciterId, playbackRate, isOffline, openOfflinePrompt, loadNextSurah, preloadNextAyah, unlockAudioContext]); 
 
   // Keep ref updated
   useEffect(() => {
@@ -617,22 +865,46 @@ const MushafView: React.FC = () => {
 
   const stopAudio = useCallback(() => {
     if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.currentTime = 0;
+        const audio = currentAudioRef.current;
+        audio.onended = null;
+        audio.onerror = null;
+        audio.ontimeupdate = null;
+        audio.onloadedmetadata = null;
+        try {
+            audio.pause();
+        } catch (e) {
+            // ignore
+        }
+        audio.currentTime = 0;
         currentAudioRef.current = null;
     }
     setIsPlaying(false);
+    setIsPlayerMinimized(false);
     setPlayingState(null);
   }, []);
 
   const togglePlay = useCallback(() => {
     unlockAudioContext();
     if (isPlaying) {
-      if (currentAudioRef.current) currentAudioRef.current.pause();
+      if (currentAudioRef.current) {
+          try {
+              currentAudioRef.current.pause();
+          } catch (e) {
+              // ignore
+          }
+      }
       setIsPlaying(false);
     } else {
       if (currentAudioRef.current) {
-          currentAudioRef.current.play();
+          const promise = currentAudioRef.current.play();
+          if (promise !== undefined) {
+              promise.catch((e) => {
+                  if (e.name !== 'AbortError') {
+                      console.warn("Play error:", e);
+                  }
+                  setIsPlaying(false);
+              });
+          }
           setIsPlaying(true);
       } else if (playingState) {
           playAyah(playingState.surah, playingState.ayah);
@@ -678,6 +950,31 @@ const MushafView: React.FC = () => {
     }
     setPopoverContent(null);
   }, [activeAyah, setActiveAyah]);
+
+  const formatAudioTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds <= 0) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    setAudioCurrentTime(time);
+    if (currentAudioRef.current) {
+      currentAudioRef.current.currentTime = time;
+    }
+  };
+
+  const handleSpeedToggle = () => {
+    const speeds = [1, 1.25, 1.5, 2];
+    const currentIndex = speeds.indexOf(playbackRate);
+    const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
+    setPlaybackRate(nextSpeed);
+    if (currentAudioRef.current) {
+      currentAudioRef.current.playbackRate = nextSpeed;
+    }
+  };
 
   const rightPageData = pages.get(currentRightPage);
   const leftPageNum = currentRightPage + 1;
@@ -758,6 +1055,22 @@ const MushafView: React.FC = () => {
           }}
         >
       
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs text-amber-700 dark:text-amber-300 z-40">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span>وضع الأوفلاين (بدون إنترنت) • يتوفر التصفح والاستماع من الذاكرة المحلية</span>
+          </div>
+          <button 
+            onClick={() => openModal('offlineManager')}
+            className="px-2.5 py-1 bg-amber-500 text-stone-950 font-bold rounded-lg hover:bg-amber-400 transition-colors"
+          >
+            إدارة التنزيلات
+          </button>
+        </div>
+      )}
+
       {/* Modern Top Progress Bar */}
       <div className="absolute top-0 left-0 right-0 h-1 z-50 pointer-events-none overflow-hidden">
         <motion.div 
@@ -773,8 +1086,32 @@ const MushafView: React.FC = () => {
         <div className="h-14 md:h-16 flex-shrink-0 bg-theme-surface/80 backdrop-blur-md border-b border-theme-border px-3 md:px-6 flex justify-between items-center shadow-sm z-30">
            <div className="flex items-center gap-2 md:gap-3">
                <h1 className="text-lg md:text-xl font-bold font-amiri text-theme-text-primary tracking-tight">المصحف الشريف</h1>
+               {/* Reciter selector pill */}
+               <div className="relative group">
+                 <select 
+                   value={reciterId}
+                   onChange={(e) => setReciterId(e.target.value)}
+                   className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-full px-3 py-1 outline-none cursor-pointer hover:bg-emerald-500/20 transition-colors"
+                 >
+                   {RECITERS.map(r => (
+                     <option key={r.id} value={r.id} className="bg-stone-900 text-white">
+                       القارئ: {r.name} {r.isDefault ? '⭐' : ''}
+                     </option>
+                   ))}
+                 </select>
+               </div>
            </div>
            <div className="flex items-center gap-1 md:gap-2">
+               <button 
+                 onClick={() => openModal('offlineManager')}
+                 className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full text-xs font-bold hover:bg-amber-500/20 transition-colors"
+                 title="إدارة تحميلات الأوفلاين"
+               >
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                 </svg>
+                 <span>تحميلات أوفلاين</span>
+               </button>
                <button onClick={() => toggleBookmark(loadedSurahs[0]?.number || 1)} className={`p-2 rounded-full hover:bg-theme-surface-hover active:scale-90 transition-all ${isBookmarked ? 'text-emerald-500' : 'text-stone-400'}`}>
                    {isBookmarked ? <BookmarkSolidIcon className="w-5 h-5"/> : <BookmarkIcon className="w-5 h-5"/>}
                </button>
@@ -932,64 +1269,179 @@ const MushafView: React.FC = () => {
         </div>
       )}
 
-      {/* Sticky Player (Desktop/Tablet) */}
-      {!isMobile && (isPlaying || currentAudioRef.current) && playingState && (
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-theme-surface/95 backdrop-blur rounded-full px-4 md:px-6 py-2 md:py-3 shadow-2xl border border-theme-border flex items-center gap-4 md:gap-6 z-50 min-w-[320px] justify-center animate-in slide-in-from-bottom-4 duration-300 mb-safe-bottom">
-               {/* Close Player Button */}
-               <button 
-                  onClick={stopAudio}
-                  className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-full transition-all active:scale-90"
-                  title="إنهاء الاستماع"
-               >
-                  <XMarkIcon className="w-5 h-5" />
-               </button>
+      {/* Sticky Player (Desktop & Mobile when playing) */}
+      {(isPlaying || currentAudioRef.current) && playingState && (
+        !isPlayerMinimized ? (
+          <div className="fixed bottom-16 md:bottom-6 left-1/2 transform -translate-x-1/2 bg-theme-surface/95 backdrop-blur-xl rounded-2xl md:rounded-full px-4 md:px-6 py-2.5 md:py-3 shadow-2xl border border-theme-border flex flex-col md:flex-row items-center gap-2 md:gap-5 z-50 max-w-[95vw] md:max-w-3xl w-full md:w-auto animate-in slide-in-from-bottom-4 duration-300">
+               <div className="flex items-center justify-between w-full md:w-auto gap-3">
+                 {/* Minimize Bar Button (Audio continues playing) */}
+                 <button 
+                    onClick={() => setIsPlayerMinimized(true)}
+                    className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full transition-all active:scale-90"
+                    title="تصغير شريط المشغل (استمرار الاستماع)"
+                 >
+                    <XMarkIcon className="w-5 h-5" />
+                 </button>
 
-               <div className="w-px h-6 bg-stone-300 dark:bg-stone-700"></div>
+                 {/* Full Stop Button */}
+                 <button 
+                    onClick={stopAudio}
+                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-full transition-all active:scale-90"
+                    title="إيقاف التلاوة نهائياً"
+                 >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                 </button>
 
-               {/* Previous Track */}
-               <button 
-                  onClick={() => {
-                      if (playingState.ayah > 1) {
-                          playAyah(playingState.surah, playingState.ayah - 1);
-                      } else if (playingState.surah > 1) {
-                           playAyah(playingState.surah - 1, 1);
-                      }
-                  }} 
-                  className="hover:text-emerald-500 rotate-180 transition-colors"
-               >
-                   <ArrowRightIcon className="w-5 h-5" />
-               </button>
-               
-               <button onClick={togglePlay} className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-emerald-700 hover:scale-105 transition-all">
-                   {isPlaying ? <PauseIcon className="w-6 h-6"/> : <PlayIcon className="w-6 h-6 ml-0.5"/>}
-               </button>
+                 <div className="w-px h-6 bg-stone-300 dark:bg-stone-700 hidden md:block"></div>
 
-               {/* Next Track */}
-               <button 
-                   onClick={() => {
-                        const surahInfo = surahsRef.current.find(s => s.number === playingState.surah);
-                        if (surahInfo && playingState.ayah < surahInfo.numberOfAyahs) {
-                            playAyah(playingState.surah, playingState.ayah + 1);
-                        } else {
-                            playAyah(playingState.surah + 1, 1);
+                 {/* Previous Track */}
+                 <button 
+                    onClick={() => {
+                        if (playingState.ayah > 1) {
+                            playAyah(playingState.surah, playingState.ayah - 1);
+                        } else if (playingState.surah > 1) {
+                             playAyah(playingState.surah - 1, 1);
                         }
-                   }}
-                   className="hover:text-emerald-500 transition-colors"
-                >
-                    <ArrowRightIcon className="w-5 h-5" />
-               </button>
-               
-               <div className="w-px h-8 bg-stone-300 dark:bg-stone-700 hidden md:block"></div>
-               
-               <div className="text-xs text-center hidden md:block cursor-default select-none">
-                   <div className="font-bold text-theme-text-primary">
-                       سورة {surahsRef.current.find(s => s.number === playingState.surah)?.name}
-                   </div>
-                   <div className="text-stone-500">
-                       الآية {playingState.ayah}
-                   </div>
+                    }} 
+                    className="hover:text-emerald-500 rotate-180 transition-colors"
+                    title="الآية السابقة"
+                 >
+                     <ArrowRightIcon className="w-5 h-5" />
+                 </button>
+                 
+                 <button onClick={togglePlay} className="w-10 h-10 md:w-12 md:h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-emerald-700 hover:scale-105 transition-all">
+                     {isPlaying ? <PauseIcon className="w-5 h-5 md:w-6 md:h-6"/> : <PlayIcon className="w-5 h-5 md:w-6 md:h-6 ml-0.5"/>}
+                 </button>
+
+                 {/* Next Track */}
+                 <button 
+                     onClick={() => {
+                          const surahInfo = surahsRef.current.find(s => s.number === playingState.surah);
+                          if (surahInfo && playingState.ayah < surahInfo.numberOfAyahs) {
+                              playAyah(playingState.surah, playingState.ayah + 1);
+                          } else {
+                              playAyah(playingState.surah + 1, 1);
+                          }
+                     }}
+                     className="hover:text-emerald-500 transition-colors"
+                     title="الآية التالية"
+                  >
+                      <ArrowRightIcon className="w-5 h-5" />
+                 </button>
+
+                 {/* Speed Toggle */}
+                 <button 
+                   onClick={handleSpeedToggle}
+                   className="px-2 py-1 text-xs font-bold bg-theme-bg-primary border border-theme-border rounded-lg text-theme-accent hover:border-emerald-500 transition-colors"
+                   title="سرعة التشغيل"
+                 >
+                   {playbackRate}x
+                 </button>
                </div>
+
+               {/* Track Info & Time Slider */}
+               <div className="flex-1 flex flex-col md:flex-row items-center gap-2 w-full">
+                 <div className="text-xs text-center md:text-right cursor-default select-none flex-shrink-0">
+                     <div className="font-bold text-theme-text-primary flex items-center gap-1.5 justify-center md:justify-start">
+                         <span>سورة {surahsRef.current.find(s => s.number === playingState.surah)?.name}</span>
+                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-sans">
+                           {activeReciter.name}
+                         </span>
+                     </div>
+                 </div>
+
+                 {/* Seek Bar */}
+                 {audioDuration > 0 && (
+                   <div className="flex items-center gap-2 w-full font-mono text-[10px] text-theme-text-muted dir-ltr">
+                     <span>{formatAudioTime(audioCurrentTime)}</span>
+                     <input 
+                       type="range" 
+                       min={0} 
+                       max={audioDuration || 100} 
+                       value={audioCurrentTime} 
+                       onChange={handleSeek}
+                       className="flex-1 accent-emerald-500 h-1.5 bg-theme-border rounded-lg cursor-pointer"
+                     />
+                     <span>{formatAudioTime(audioDuration)}</span>
+                   </div>
+                 )}
+               </div>
+
+               {/* Download Surah for Offline */}
+               <button 
+                 onClick={() => {
+                   const surahInfo = surahsRef.current.find(s => s.number === playingState.surah);
+                   if (surahInfo) {
+                     openOfflinePrompt(surahInfo.number, surahInfo.name);
+                   }
+                 }}
+                 className={`p-2 rounded-full border transition-all text-xs font-bold flex items-center gap-1 ${isCurrentSurahOffline ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20'}`}
+                 title={isCurrentSurahOffline ? 'هذه السورة محملة للأوفلاين' : 'تحميل السورة للاستماع أوفلاين'}
+               >
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                 </svg>
+                 <span className="hidden lg:inline">{isCurrentSurahOffline ? 'محملة' : 'تحميل أوفلاين'}</span>
+               </button>
           </div>
+        ) : (
+          /* Minimized Floating Audio Pill */
+          <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 bg-theme-surface/95 backdrop-blur-xl border border-emerald-500/40 rounded-full shadow-2xl px-3 py-2 flex items-center gap-3 animate-in zoom-in-95 duration-200">
+             <div 
+               onClick={() => setIsPlayerMinimized(false)}
+               className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+               title="انقر لتوسيع شريط المشغل"
+             >
+                <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                   {isPlaying ? (
+                     <span className="relative flex h-3 w-3">
+                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                     </span>
+                   ) : (
+                     <PlayIcon className="w-4 h-4" />
+                   )}
+                </div>
+                <div className="text-xs font-bold text-theme-text-primary pr-1">
+                   <span>سورة {surahsRef.current.find(s => s.number === playingState.surah)?.name}</span>
+                   <span className="text-[10px] text-theme-text-secondary block font-mono">الآية {playingState.ayah}</span>
+                </div>
+             </div>
+
+             <div className="w-px h-5 bg-stone-300 dark:bg-stone-700"></div>
+
+             {/* Play/Pause Button */}
+             <button 
+               onClick={togglePlay} 
+               className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 text-emerald-600 dark:text-emerald-400 rounded-full transition-all"
+               title={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
+             >
+               {isPlaying ? <PauseIcon className="w-4 h-4"/> : <PlayIcon className="w-4 h-4"/>}
+             </button>
+
+             {/* Expand Button */}
+             <button 
+               onClick={() => setIsPlayerMinimized(false)}
+               className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-emerald-600 rounded-full transition-all"
+               title="توسيع المشغل"
+             >
+               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+               </svg>
+             </button>
+
+             {/* Stop Button */}
+             <button 
+               onClick={stopAudio}
+               className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-full transition-all"
+               title="إيقاف التلاوة نهائياً"
+             >
+               <XMarkIcon className="w-4 h-4" />
+             </button>
+          </div>
+        )
       )}
 
       {/* Modern Popover with Glassmorphism */}

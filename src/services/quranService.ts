@@ -1,5 +1,6 @@
 import { QuranAPIResponse, Surah, SurahDetail } from '../types';
 import { FALLBACK_SURAHS } from '../data/surahs';
+import { getSurahFromDB, saveSurahToDB } from './offlineService';
 
 const DIRECT_API_URL = 'https://api.alquran.cloud/v1';
 const PROXY_API_URL = '/api/quran';
@@ -66,6 +67,17 @@ export const fetchSurahDetails = async (surahNumber: number): Promise<SurahDetai
   if (surahDetailsCache.has(surahNumber)) {
     return surahDetailsCache.get(surahNumber)!;
   }
+
+  // 1. Check IndexedDB Offline Cache first
+  try {
+    const offlineSurah = await getSurahFromDB(surahNumber);
+    if (offlineSurah && offlineSurah.ayahs && offlineSurah.ayahs.length > 0) {
+      surahDetailsCache.set(surahNumber, offlineSurah);
+      return offlineSurah;
+    }
+  } catch (dbErr) {
+    console.warn(`IndexedDB lookup failed for surah ${surahNumber}:`, dbErr);
+  }
   
   try {
     // Attempt 1: Combined Uthmani script + Alafasy audio
@@ -85,12 +97,15 @@ export const fetchSurahDetails = async (surahNumber: number): Promise<SurahDetai
         ayahs: mergedAyahs
       };
       surahDetailsCache.set(surahNumber, result);
+      // Auto save to IndexedDB for offline access
+      saveSurahToDB(result).catch(() => {});
       return result;
     }
 
     if (json.data && json.data.ayahs) {
       const result: SurahDetail = json.data;
       surahDetailsCache.set(surahNumber, result);
+      saveSurahToDB(result).catch(() => {});
       return result;
     }
 
@@ -114,6 +129,7 @@ export const fetchSurahDetails = async (surahNumber: number): Promise<SurahDetai
           ayahs: mergedAyahs
         };
         surahDetailsCache.set(surahNumber, result);
+        saveSurahToDB(result).catch(() => {});
         return result;
       }
     } catch (fallbackError) {
