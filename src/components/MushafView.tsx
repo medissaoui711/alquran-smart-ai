@@ -585,9 +585,9 @@ const MushafView: React.FC = () => {
           const lastSurah = loadedSurahs[loadedSurahs.length - 1];
           if (lastSurah && lastSurah.number < 114) {
               setIsSwipingSurah(true);
+              useQuranStore.setState({ initialPageToLoad: nextPage });
               await loadNextSurah();
               setIsSwipingSurah(false);
-              setCurrentRightPage(nextPage);
           }
       } else {
           setCurrentRightPage(nextPage);
@@ -603,12 +603,9 @@ const MushafView: React.FC = () => {
           const firstSurah = loadedSurahs[0];
           if (firstSurah && firstSurah.number > 1) {
               setIsSwipingSurah(true);
+              useQuranStore.setState({ initialPageToLoad: prevPage });
               await loadPrevSurah();
               setIsSwipingSurah(false);
-              setCurrentRightPage(prevPage);
-          } else if (firstSurah && firstSurah.number === 1 && currentRightPage === 1) {
-              // At Al-Fatihah (Page 1), fallback to next page/surah so swipe always responds
-              await handleNextPage();
           }
       } else if (prevPage >= 1) {
           setCurrentRightPage(prevPage);
@@ -631,13 +628,13 @@ const MushafView: React.FC = () => {
   const onTouchEnd = () => {
       if (!touchStart || !touchEnd) return;
       const distance = touchStart - touchEnd;
-      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Next Page / Surah
-      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Previous Page / Surah
+      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Previous Page / Surah
+      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Next Page / Surah
 
       if (isLeftSwipe) {
-          handleNextPage();
-      } else if (isRightSwipe) {
           handlePrevPage();
+      } else if (isRightSwipe) {
+          handleNextPage();
       }
       
       setTouchStart(null);
