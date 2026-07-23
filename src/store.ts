@@ -160,8 +160,8 @@ export const useQuranStore = create<QuranState>()(
       },
 
       loadNextSurah: async () => {
-        const { loadedSurahs, isLoading } = get();
-        if (loadedSurahs.length === 0 || isLoading) return;
+        const { loadedSurahs } = get();
+        if (loadedSurahs.length === 0) return;
 
         const lastSurah = loadedSurahs[loadedSurahs.length - 1];
         if (lastSurah.number >= 114) return;
@@ -180,13 +180,13 @@ export const useQuranStore = create<QuranState>()(
             });
           }
         } catch (error) {
-          console.error("Failed to load next surah");
+          console.error("Failed to load next surah", error);
         }
       },
 
       loadPrevSurah: async () => {
-        const { loadedSurahs, isLoading } = get();
-        if (loadedSurahs.length === 0 || isLoading) return;
+        const { loadedSurahs } = get();
+        if (loadedSurahs.length === 0) return;
 
         const firstSurah = loadedSurahs[0];
         if (firstSurah.number <= 1) return;
@@ -205,7 +205,7 @@ export const useQuranStore = create<QuranState>()(
             });
           }
         } catch (error) {
-          console.error("Failed to load previous surah");
+          console.error("Failed to load previous surah", error);
         }
       },
 

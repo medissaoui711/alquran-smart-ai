@@ -441,10 +441,11 @@ const MushafView: React.FC = () => {
   useEffect(() => {
     if (initialPageToLoad && pages.has(initialPageToLoad)) {
         setCurrentRightPage(initialPageToLoad);
+        useQuranStore.setState({ initialPageToLoad: null });
     } else if (pageNumbers.length > 0 && !pages.has(currentRightPage)) {
         setCurrentRightPage(pageNumbers[0]);
     }
-  }, [initialPageToLoad, pages, pageNumbers]);
+  }, [initialPageToLoad, pages, pageNumbers, currentRightPage]);
 
   // Effect: Persist exact reading position
   useEffect(() => {
@@ -577,7 +578,7 @@ const MushafView: React.FC = () => {
 
   const handleNextPage = async () => {
       const step = isMobile ? 1 : 2;
-      const maxPage = pageNumbers.length > 0 ? Math.max(...pageNumbers) : 604;
+      const maxPage = pageNumbers.length > 0 ? Math.max(...pageNumbers) : 0;
       const nextPage = currentRightPage + step;
 
       if (nextPage > maxPage) {
@@ -605,6 +606,9 @@ const MushafView: React.FC = () => {
               await loadPrevSurah();
               setIsSwipingSurah(false);
               setCurrentRightPage(prevPage);
+          } else if (firstSurah && firstSurah.number === 1 && currentRightPage === 1) {
+              // At Al-Fatihah (Page 1), fallback to next page/surah so swipe always responds
+              await handleNextPage();
           }
       } else if (prevPage >= 1) {
           setCurrentRightPage(prevPage);
@@ -627,8 +631,8 @@ const MushafView: React.FC = () => {
   const onTouchEnd = () => {
       if (!touchStart || !touchEnd) return;
       const distance = touchStart - touchEnd;
-      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Next Page / Next Surah
-      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Prev Page / Prev Surah
+      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Next Page / Surah
+      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Previous Page / Surah
 
       if (isLeftSwipe) {
           handleNextPage();
