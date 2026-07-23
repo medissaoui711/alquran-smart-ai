@@ -160,13 +160,19 @@ export const useQuranStore = create<QuranState>()(
       },
 
       loadNextSurah: async () => {
-        const { loadedSurahs } = get();
-        if (loadedSurahs.length === 0) return;
+        const { loadedSurahs, selectedSurah } = get();
+        let lastSurahNumber;
+        if (loadedSurahs.length > 0) {
+            lastSurahNumber = loadedSurahs[loadedSurahs.length - 1].number;
+        } else if (selectedSurah) {
+            lastSurahNumber = selectedSurah.number;
+        } else {
+            return;
+        }
 
-        const lastSurah = loadedSurahs[loadedSurahs.length - 1];
-        if (lastSurah.number >= 114) return;
+        if (lastSurahNumber >= 114) return;
 
-        const nextSurahNumber = lastSurah.number + 1;
+        const nextSurahNumber = lastSurahNumber + 1;
         if (loadedSurahs.some(s => s.number === nextSurahNumber)) return;
 
         try {
@@ -185,13 +191,19 @@ export const useQuranStore = create<QuranState>()(
       },
 
       loadPrevSurah: async () => {
-        const { loadedSurahs } = get();
-        if (loadedSurahs.length === 0) return;
+        const { loadedSurahs, selectedSurah } = get();
+        let firstSurahNumber;
+        if (loadedSurahs.length > 0) {
+            firstSurahNumber = loadedSurahs[0].number;
+        } else if (selectedSurah) {
+            firstSurahNumber = selectedSurah.number;
+        } else {
+            return;
+        }
 
-        const firstSurah = loadedSurahs[0];
-        if (firstSurah.number <= 1) return;
+        if (firstSurahNumber <= 1) return;
 
-        const prevSurahNumber = firstSurah.number - 1;
+        const prevSurahNumber = firstSurahNumber - 1;
         if (loadedSurahs.some(s => s.number === prevSurahNumber)) return;
 
         try {

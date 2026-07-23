@@ -582,12 +582,13 @@ const MushafView: React.FC = () => {
       const nextPage = currentRightPage + step;
 
       if (nextPage > maxPage) {
-          const lastSurah = loadedSurahs[loadedSurahs.length - 1];
+          const lastSurah = loadedSurahs[loadedSurahs.length - 1] || useQuranStore.getState().selectedSurah;
           if (lastSurah && lastSurah.number < 114) {
               setIsSwipingSurah(true);
               useQuranStore.setState({ initialPageToLoad: nextPage });
               await loadNextSurah();
               setIsSwipingSurah(false);
+              setCurrentRightPage(nextPage);
           }
       } else {
           setCurrentRightPage(nextPage);
@@ -600,45 +601,67 @@ const MushafView: React.FC = () => {
       const prevPage = currentRightPage - step;
 
       if (prevPage < minPage) {
-          const firstSurah = loadedSurahs[0];
+          const firstSurah = loadedSurahs[0] || useQuranStore.getState().selectedSurah;
           if (firstSurah && firstSurah.number > 1) {
               setIsSwipingSurah(true);
               useQuranStore.setState({ initialPageToLoad: prevPage });
               await loadPrevSurah();
               setIsSwipingSurah(false);
+              setCurrentRightPage(prevPage);
+          } else if (firstSurah && firstSurah.number === 1 && currentRightPage === 1) {
+              // At Al-Fatihah (Page 1), fallback to next page/surah so swipe always responds
+              await handleNextPage();
           }
       } else if (prevPage >= 1) {
           setCurrentRightPage(prevPage);
       }
   };
 
-  // --- Touch Handlers ---
-  const minSwipeDistance = 35; // Responsive threshold for mobile swipe gestures
+  // --- Mouse / Touch Handlers ---
+  const minSwipeDistance = 35; // Responsive threshold for gesture
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onDragStart = (clientX: number) => {
       setTouchEnd(null);
-      setTouchStart(e.targetTouches[0].clientX);
-      unlockAudioContext(); // Ensure audio unlocked on touch
+      setTouchStart(clientX);
+      unlockAudioContext();
   };
 
-  const onTouchMove = (e: React.TouchEvent) => {
-      setTouchEnd(e.targetTouches[0].clientX);
+  const onDragMove = (clientX: number) => {
+      if (touchStart !== null) {
+          setTouchEnd(clientX);
+      }
   };
 
-  const onTouchEnd = () => {
+  const onDragEnd = () => {
       if (!touchStart || !touchEnd) return;
       const distance = touchStart - touchEnd;
-      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Previous Page / Surah
-      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Next Page / Surah
+      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--)
+      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->)
 
-      if (isLeftSwipe) {
-          handlePrevPage();
-      } else if (isRightSwipe) {
+      // Arabic book direction:
+      // Pulling from left to right (--> Right Swipe) goes to the NEXT page.
+      // Pulling from right to left (<-- Left Swipe) goes to the PREVIOUS page.
+      if (isRightSwipe) {
           handleNextPage();
+      } else if (isLeftSwipe) {
+          handlePrevPage();
       }
       
       setTouchStart(null);
       setTouchEnd(null);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => onDragStart(e.targetTouches[0].clientX);
+  const onTouchMove = (e: React.TouchEvent) => onDragMove(e.targetTouches[0].clientX);
+  const onTouchEnd = onDragEnd;
+
+  const onMouseDown = (e: React.MouseEvent) => onDragStart(e.clientX);
+  const onMouseMove = (e: React.MouseEvent) => onDragMove(e.clientX);
+  const onMouseUp = onDragEnd;
+  const onMouseLeave = () => {
+      if (touchStart !== null) {
+          onDragEnd();
+      }
   };
 
   const preloadNextAyah = useCallback((surahNum: number, ayahNum: number) => {
@@ -1015,6 +1038,16 @@ const MushafView: React.FC = () => {
   const leftPageNum = currentRightPage + 1;
   const leftPageData = pages.get(leftPageNum);
 
+  // Preload next surah if the left page is missing in two-page mode (e.g., Al-Fatihah)
+  useEffect(() => {
+      if (!isMobile && rightPageData && !leftPageData && leftPageNum <= 604 && !isSwipingSurah) {
+          const lastSurah = loadedSurahs[loadedSurahs.length - 1] || useQuranStore.getState().selectedSurah;
+          if (lastSurah && lastSurah.number < 114) {
+              loadNextSurah();
+          }
+      }
+  }, [isMobile, rightPageData, leftPageData, leftPageNum, isSwipingSurah, loadedSurahs, loadNextSurah]);
+
   return (
     <AnimatePresence mode="wait">
       {showSplash || surahsList.length === 0 ? (
@@ -1082,7 +1115,7 @@ const MushafView: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex-1 h-full flex flex-col bg-theme-bg-secondary relative overflow-hidden transition-colors duration-500" 
+          className="flex-1 h-full flex flex-col bg-theme-bg-secondary relative overflow-hidden transition-colors duration-500 select-none" 
           onClick={() => {
               setPopoverContent(null);
               setSelectedAyahForMenu(null);
@@ -1167,6 +1200,11 @@ const MushafView: React.FC = () => {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
+        onDragStart={(e) => e.preventDefault()}
       >
           {/* Subtle Islamic Pattern Overlay */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]" />
