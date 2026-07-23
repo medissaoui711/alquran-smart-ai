@@ -115,6 +115,7 @@ interface QuranState {
   fetchSurahList: () => Promise<void>;
   loadSingleSurah: (surah: Surah, startPage?: number | null) => Promise<void>;
   loadNextSurah: () => Promise<void>;
+  loadPrevSurah: () => Promise<void>;
   toggleBookmark: (surahNumber: number) => void;
   setActiveAyah: (ayahKey: string | null) => void;
   resumeLastRead: () => void;
@@ -180,6 +181,31 @@ export const useQuranStore = create<QuranState>()(
           }
         } catch (error) {
           console.error("Failed to load next surah");
+        }
+      },
+
+      loadPrevSurah: async () => {
+        const { loadedSurahs, isLoading } = get();
+        if (loadedSurahs.length === 0 || isLoading) return;
+
+        const firstSurah = loadedSurahs[0];
+        if (firstSurah.number <= 1) return;
+
+        const prevSurahNumber = firstSurah.number - 1;
+        if (loadedSurahs.some(s => s.number === prevSurahNumber)) return;
+
+        try {
+          const detail = await fetchSurahDetails(prevSurahNumber);
+          if (detail) {
+            set((state) => {
+              if (state.loadedSurahs.some(s => s.number === detail.number)) {
+                return state;
+              }
+              return { loadedSurahs: [detail, ...state.loadedSurahs] };
+            });
+          }
+        } catch (error) {
+          console.error("Failed to load previous surah");
         }
       },
 

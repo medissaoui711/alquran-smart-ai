@@ -272,6 +272,15 @@ const QuranPage = React.memo(({
     fontSize: number;
     fontType: string;
 }) => {
+    const pageContainerRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to top whenever pageNumber changes
+    useEffect(() => {
+        if (pageContainerRef.current) {
+            pageContainerRef.current.scrollTop = 0;
+        }
+    }, [pageNumber]);
+
     // Dynamic text sizing based on device width using clamps and viewport units
     const textStyle = {
         fontFamily: fontType,
@@ -295,7 +304,10 @@ const QuranPage = React.memo(({
             </div>
 
             {/* Page Content - Improved Typography and Spacing */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6 md:py-10 scrollbar-hide md:scrollbar-thin scrollbar-thumb-emerald-500/20 overscroll-contain relative">
+            <div 
+                ref={pageContainerRef}
+                className="flex-1 overflow-y-auto px-4 md:px-12 py-6 md:py-10 scrollbar-hide md:scrollbar-thin scrollbar-thumb-emerald-500/20 overscroll-contain relative"
+            >
                 {/* Subtle Paper Texture */}
                 <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
 
@@ -364,12 +376,14 @@ const MushafView: React.FC = () => {
     loadedSurahs, 
     surahs: surahsList, 
     loadNextSurah, 
+    loadPrevSurah,
     initialPageToLoad, 
     toggleBookmark, 
     bookmarks,
     activeAyah,
     setActiveAyah 
   } = useQuranStore();
+  const [isSwipingSurah, setIsSwipingSurah] = useState(false);
   const { fontSize, fontType, theme, setTheme, reciterId, setReciterId } = useSettingsStore();
   const { isMobile, isTablet, isDesktop, openModal, openOfflinePrompt, showSplash, setShowSplash, setDrawerOpen } = useUIStore();
   const isOffline = useOfflineStatus();
@@ -549,6 +563,10 @@ const MushafView: React.FC = () => {
 
 
   useEffect(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentRightPage]);
+
+  useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
           if (e.key === 'ArrowRight') handlePrevPage();
           if (e.key === 'ArrowLeft') handleNextPage();
@@ -557,27 +575,44 @@ const MushafView: React.FC = () => {
       return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentRightPage, isMobile, pageNumbers]);
 
-  const handleNextPage = () => {
+  const handleNextPage = async () => {
       const step = isMobile ? 1 : 2;
-      const maxPage = Math.max(...pageNumbers);
+      const maxPage = pageNumbers.length > 0 ? Math.max(...pageNumbers) : 604;
       const nextPage = currentRightPage + step;
+
       if (nextPage > maxPage) {
-          loadNextSurah();
+          const lastSurah = loadedSurahs[loadedSurahs.length - 1];
+          if (lastSurah && lastSurah.number < 114) {
+              setIsSwipingSurah(true);
+              await loadNextSurah();
+              setIsSwipingSurah(false);
+              setCurrentRightPage(nextPage);
+          }
       } else {
           setCurrentRightPage(nextPage);
       }
   };
 
-  const handlePrevPage = () => {
+  const handlePrevPage = async () => {
       const step = isMobile ? 1 : 2;
+      const minPage = pageNumbers.length > 0 ? Math.min(...pageNumbers) : 1;
       const prevPage = currentRightPage - step;
-      if (prevPage >= Math.min(...pageNumbers)) {
+
+      if (prevPage < minPage) {
+          const firstSurah = loadedSurahs[0];
+          if (firstSurah && firstSurah.number > 1) {
+              setIsSwipingSurah(true);
+              await loadPrevSurah();
+              setIsSwipingSurah(false);
+              setCurrentRightPage(prevPage);
+          }
+      } else if (prevPage >= 1) {
           setCurrentRightPage(prevPage);
       }
   };
 
   // --- Touch Handlers ---
-  const minSwipeDistance = 50;
+  const minSwipeDistance = 35; // Responsive threshold for mobile swipe gestures
 
   const onTouchStart = (e: React.TouchEvent) => {
       setTouchEnd(null);
@@ -592,14 +627,13 @@ const MushafView: React.FC = () => {
   const onTouchEnd = () => {
       if (!touchStart || !touchEnd) return;
       const distance = touchStart - touchEnd;
-      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--)
-      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->)
+      const isLeftSwipe = distance > minSwipeDistance;  // Dragging finger Left (<--) -> Next Page / Next Surah
+      const isRightSwipe = distance < -minSwipeDistance; // Dragging finger Right (-->) -> Prev Page / Prev Surah
 
       if (isLeftSwipe) {
-          handlePrevPage();
-      }
-      if (isRightSwipe) {
           handleNextPage();
+      } else if (isRightSwipe) {
+          handlePrevPage();
       }
       
       setTouchStart(null);
@@ -1159,6 +1193,15 @@ const MushafView: React.FC = () => {
                 bg-stone-800 dark:bg-[#1a1816] ring-1 ring-white/10
             `}
           >
+              {isSwipingSurah && (
+                  <div className="absolute inset-0 z-50 bg-stone-950/40 backdrop-blur-xs flex items-center justify-center transition-all animate-in fade-in duration-200">
+                      <div className="bg-theme-surface/95 border border-emerald-500/30 px-5 py-3 rounded-full shadow-2xl flex items-center gap-3">
+                          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">جاري تحميل السورة...</span>
+                      </div>
+                  </div>
+              )}
+
               {loadedSurahs.length === 0 ? (
                   <div className="flex-1 bg-theme-surface flex items-center justify-center">
                       <div className="flex flex-col items-center gap-4">
