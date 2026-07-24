@@ -5,9 +5,10 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Amiri", "Scheherazade New", serif;
+  --font-heading: "Source Serif 4", "Amiri", serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Theme Colors */
+  /* Theme Colors mapped to CSS variables */
   --color-theme-bg-primary: rgb(var(--color-bg-primary));
   --color-theme-bg-secondary: rgb(var(--color-bg-secondary));
   --color-theme-surface: rgb(var(--color-surface));
@@ -18,33 +19,50 @@
   --color-theme-border: rgb(var(--color-border));
   --color-theme-accent: rgb(var(--color-accent));
   --color-theme-accent-hover: rgb(var(--color-accent-hover));
+  --color-theme-gold: rgb(var(--color-gold));
+
+  /* Explicit Palette Tokens */
+  --color-serene-primary: #004532;
+  --color-serene-primary-container: #065f46;
+  --color-serene-on-primary-container: #8bd6b7;
+  --color-serene-secondary: #855300;
+  --color-serene-secondary-container: #fea619;
+  --color-serene-emerald-deep: #064e3b;
+  --color-serene-emerald-vibrant: #10b981;
+  --color-serene-gold-matte: #d97706;
+  --color-serene-parchment: #f8f5f0;
+  --color-serene-ink-stone: #1c1917;
 }
 
 @layer base {
   :root {
-    --color-bg-primary: 245 245 244;
-    --color-bg-secondary: 253 251 247;
-    --color-surface: 255 255 255;
-    --color-surface-hover: 245 245 244;
-    --color-text-primary: 28 25 23;
-    --color-text-secondary: 87 83 78;
-    --color-text-muted: 168 162 158;
-    --color-border: 231 229 228;
-    --color-accent: 16 185 129;
-    --color-accent-hover: 4 120 87;
+    /* Serene Wisdom Light Palette */
+    --color-bg-primary: 255 248 245;      /* #fff8f5 background / surface */
+    --color-bg-secondary: 248 245 240;    /* #f8f5f0 parchment light */
+    --color-surface: 255 255 255;         /* #ffffff surface container lowest */
+    --color-surface-hover: 244 236 232;   /* #f4ece8 surface container */
+    --color-text-primary: 30 27 25;       /* #1e1b19 on-surface */
+    --color-text-secondary: 63 73 68;     /* #3f4944 on-surface-variant */
+    --color-text-muted: 111 121 115;      /* #6f7973 outline */
+    --color-border: 224 216 213;          /* #e0d8d5 surface-dim */
+    --color-accent: 0 69 50;              /* #004532 primary emerald */
+    --color-accent-hover: 6 95 70;        /* #065f46 primary container */
+    --color-gold: 217 119 6;              /* #d97706 gold matte */
   }
 
   .dark {
-    --color-bg-primary: 15 20 18;
-    --color-bg-secondary: 22 28 25;
-    --color-surface: 28 36 32;
-    --color-surface-hover: 38 48 43;
-    --color-text-primary: 245 247 246;
-    --color-text-secondary: 185 195 190;
-    --color-text-muted: 130 145 138;
-    --color-border: 45 58 52;
+    /* Serene Wisdom Dark Palette */
+    --color-bg-primary: 18 24 21;
+    --color-bg-secondary: 26 34 30;
+    --color-surface: 32 42 37;
+    --color-surface-hover: 42 54 48;
+    --color-text-primary: 247 245 240;
+    --color-text-secondary: 190 201 195;
+    --color-text-muted: 139 152 146;
+    --color-border: 48 62 55;
     --color-accent: 16 185 129;
     --color-accent-hover: 5 150 105;
+    --color-gold: 254 166 25;
   }
 
   body {
