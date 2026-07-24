@@ -306,13 +306,13 @@ const QuranPage = React.memo(({
             {/* Page Content - Improved Typography and Spacing */}
             <div 
                 ref={pageContainerRef}
-                className="flex-1 overflow-y-auto px-4 md:px-12 py-6 md:py-10 scrollbar-hide md:scrollbar-thin scrollbar-thumb-emerald-500/20 overscroll-contain relative"
+                className="flex-1 overflow-y-auto px-4 md:px-12 pt-4 md:pt-8 pb-12 md:pb-8 scrollbar-hide md:scrollbar-thin scrollbar-thumb-emerald-500/20 overscroll-contain relative"
             >
                 {/* Subtle Paper Texture */}
                 <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
 
                 <div 
-                    className="relative z-10 text-justify text-theme-text-primary transition-all duration-300" 
+                    className="relative z-10 text-justify text-theme-text-primary transition-all duration-300 pb-2" 
                     dir="rtl"
                     style={textStyle}
                 >
